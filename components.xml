@@ -1,0 +1,3898 @@
+<?xml version="1.0"?>
+<components xmlns="http://schemas.oilspace.com/core/2002/08/components"
+            xmlns:time="http://schemas.oilspace.com/core/components/time/"
+            xmlns:ports="http://schemas.oilspace.com/core/components/ports/"
+            xmlns:rpc="http://schemas.oilspace.com/core/components/rpc/"
+            xmlns:servlet="http://schemas.oilspace.com/core/components/servlet/"
+            xmlns:feeds="http://schemas.oilspace.com/core/components/feeds/"
+            xmlns:priceman="http://schemas.oilspace.com/core/components/price-manager/"
+            xmlns:users="http://schemas.oilspace.com/core/components/users/"
+            xmlns:portal="http://schemas.oilspace.com/core/components/portal/"
+            xmlns:portalimpl="http://schemas.oilspace.com/core/components/portal/impl/"
+            xmlns:db="http://schemas.oilspace.com/core/components/database/"
+            xmlns:schema="http://schemas.oilspace.com/core/components/schema/"
+            xmlns:symbol="http://schemas.oilspace.com/core/components/symbol/"
+            xmlns:symsearch="http://schemas.oilspace.com/core/components/symsearch/"
+            xmlns:pfshooks="http://schemas.oilspace.com/pfs/components/hooks/"
+            xmlns:pfscorehooks="http://schemas.oilspace.com/pfscore/components/hooks/"
+            xmlns:sso="http://schemas.oilspace.com/core/components/sso/"
+            xmlns:fstb="http://schemas.oilspace.com/core/components/fstb/"
+            xmlns:gf="http://schemas.oilspace.com/core/components/gf/"
+            xmlns:refinery="http://schemas.oilspace.com/core/components/refinery/">
+
+    <!-- general defaults -->
+    <define-default class="java.util.Timer">
+        <default-constructor/>
+    </define-default>
+
+    <define-default class="java.util.Random">
+        <default-constructor/>
+    </define-default>
+
+    <define-default class="javax.naming.InitialContext">
+        <default-constructor/>
+    </define-default>
+
+    <define-default class="com.oilspace.apps.tweak.Tweak">
+        <uses class="com.oilspace.apps.init.TweakTopLevel"/>
+    </define-default>
+
+    <define-default class="com.oilspace.apps.common.workqueue.ThreadPool">
+        <uses ref="workqueue-watchdog-config"/>
+    </define-default>
+
+    <define-default class="com.oilspace.apps.common.workqueue.BatchConfig">
+        <property name="batchLimit">100</property>
+    </define-default>
+
+    <define name="default-custom-channel-provider-listener"
+            class="com.oilspace.apps.channel.impl.feeds.CustomChannelChangeListenerStub"/>
+    <define-default class="com.oilspace.apps.channel.impl.feeds.CustomChannelChangeListener"
+                    ref="default-custom-channel-provider-listener"/>
+
+    <define name="single-thread-work-queue-benchmark"
+            class="com.oilspace.apps.common.workqueue.SingleThreadWorkQueueBenchmark">
+        <uses class="com.oilspace.apps.common.workqueue.SingleThreadWorkQueueBenchmarkConfig">
+            <property name="queueNumber">10</property>
+            <property name="concurrency">100</property>
+            <property name="iterations">1000000000</property>
+            <property name="throttleDownCount">10000</property>
+            <property name="throttleDownCheckGranularity">100</property>
+            <property name="measurementTime" unit="minutes">5</property>
+            <property name="monitoringPeriod" unit="seconds">5</property>
+        </uses>
+    </define>
+
+    <define name="workqueue-watchdog-config"
+            class="com.oilspace.apps.common.workqueue.WatchdogConfig">
+        <property name="defanged"><old-config name="DEFANG_WATCHDOG"/></property>
+    </define>
+
+    <define-default class="com.oilspace.apps.init.ControllerProxy">
+        <uses class="com.oilspace.apps.common.workqueue.ExpandingWorkQueue">
+            <uses class="com.oilspace.apps.common.workqueue.ExpandingWorkQueueConfig">
+                <property name="name">Init framework work queue</property>
+                <property name="maxConcurrency">100</property>
+                <property name="expandInterval">500</property>
+            </uses>
+        </uses>
+    </define-default>
+
+    <define name="null">
+        <null/>
+    </define>
+
+    <define name="lint" class="com.oilspace.apps.init.Lint"/>
+
+    <import href="components/time.xml"/>
+    <import href="components/ports.xml"/>
+
+    <import href="components/applets.xml"/>
+    <import href="components/rpc.xml"/>
+    <import href="components/rpc-tests.xml"/>
+    
+    <define name="rpc-tests-server" ref="rpctests:server" xmlns:rpctests="http://schemas.oilspace.com/core/components/rpctests/"/>
+    <define name="rpc-tests-client" ref="rpctests:client" xmlns:rpctests="http://schemas.oilspace.com/core/components/rpctests/"/>
+
+    <import href="components/servlet.xml"/>
+    <import href="components/portal.xml"/>
+
+
+    <import href="components/sso.xml"/>
+
+    <!-- compatibility names -->
+    <define name="servlet-mapping" abstract="true"
+            ref="servlet:mapping"/>
+    <define name="servlet-rewrite-mapping" abstract="true"
+            ref="servlet:rewrite-mapping"/>
+    <define name="servlet-redirect-mapping" abstract="true"
+            ref="servlet:redirect-mapping"/>
+    <define name="servlet-redirect-permanent-mapping" abstract="true"
+            ref="servlet:redirect-permanent-mapping"/>
+    <define name="servlet-webapp-mapping" abstract="true"
+            ref="servlet:webapp-mapping"/>
+    <define name="servlet-without-security" abstract="true"
+            ref="servlet:without-security"/>
+
+    <import href="components/database.xml"/>
+    <import href="components/schema.xml"/>
+
+    <!-- compatibility names -->
+    <define name="default-database" ref="schema:core-database"/>
+    <define name="market-database" ref="schema:market-database"/>
+    <define name="admin-database" ref="db:make-database">
+        <define name="db:datasource" ref="db:admin-datasource">
+            <define name="db:url"><old-config name="ORACLE_URL"/></define>
+        </define>
+    </define>
+
+    <import href="components/feeds.xml"/>
+
+    <!-- compatibility names -->
+    <define name="feeds-server-required" abstract="true"
+            ref="feeds:server-required"/>
+
+    <import href="components/users.xml"/>
+
+    <!-- compatibility names -->
+    <define name="iuser-server" abstract="true" ref="users:server"/>
+
+    <import href="components/symbol.xml"/>
+
+    <!-- compatibility names -->
+    <define name="symbol-security" abstract="true" ref="symbol:security"/>
+    <define name="symbol-parser" abstract="true" ref="symbol:parser"/>
+    <define name="symbol-dictionary" abstract="true" ref="symbol:dictionary"/>
+    <define name="argus-symbol-dictionary" abstract="true" ref="symbol:argus-dictionary"/>
+    <define name="symbol-description-server" abstract="true" ref="symbol:description-server"/>
+
+    <import href="components/symsearch.xml"/>
+
+    <import href="components/fstb.xml"/>
+    <define name="feeds-system-benchmark" ref="fstb:feeds-system-benchmark"/>
+    
+    <!-- compatibility names -->
+    <define name="symbol-search-required" ref="symsearch:server"/>
+    <define name="rpc-symbol-search" abstract="true" ref="symsearch:port-def"/>
+
+    <!-- Caches -->
+    <define-default class="com.oilspace.apps.cache.CacheRegistry"/>
+
+    <!-- codepack support -->
+    <define name="codepack-resolver" class="com.oilspace.apps.resource.CodePackMap">
+        <uses class="com.oilspace.apps.resource.CodePackMapping[]">
+            <item>
+                <property name="path">/core</property>
+                <property name="codePack"><old-config name="CODEPACK_ROOT"/></property>
+            </item>
+            <include-hook name="oilwatch-codepack-mappings"/>
+            <include-hook name="aspect-codepack-mappings"/>
+            <include-hook name="pfscorehooks:codepack-mappings"/>
+            <include-hook name="pfshooks:codepack-mappings"/>
+            <include-hook name="calendar-codepack-mappings"/>
+        </uses>
+    </define>
+
+    <define name="codepack-search-resolver" class="com.oilspace.apps.resource.CodePackSearch"/>
+
+    <define name="src-static-servlet-config" class="com.oilspace.apps.services.appserver.servlet.staticcontent.StaticServletConfig">
+        <property name="expiresHeaderTime" unit="hours">8</property>
+        <property name="staticResourceSource" ref="static-resource-source-wrapper">
+            <define name="static-resource-source" class="com.oilspace.apps.services.appserver.servlet.staticcontent.StaticResourceLoader"/>
+        </property>
+    </define>
+
+    <define name="src-servlet-mappings" abstract="true" class="com.oilspace.apps.services.appserver.servlet.target.TargetMapping[]">
+        <include ref="portal:servlet-mappings"/>
+
+        <include ref="servlet:without-security">
+            <define name="for" ref="src-servlet-no-session-mappings"/>
+        </include>
+
+        <!-- Servlets requiring default (session-only) security checks -->
+        <item ref="servlet:mapping">
+            <define name="path">/servlet/PriceServlet/*</define>
+            <define name="servlet" class="com.oilspace.apps.marketstate.persistence.servlet.PriceServlet">
+                <uses ref="rpc-price-manager"/>
+                <uses ref="portal:data-source-timing"/>
+            </define>
+        </item>
+    </define>
+
+    <define name="mobile-portal-login-path"
+            class="java.lang.String">/m/login</define>
+    <define name="mobile-portal-forgot-password-path"
+            class="java.lang.String">/m/forgot-password</define>
+    <define name="mobile-portal-reset-password-path"
+            class="java.lang.String">/m/reset-password</define>
+    <define name="mobile-portal-home-path" class="java.lang.String">/m/</define>
+    <define name="mobile-portal-password-path"
+            class="java.lang.String">/m/password/</define>
+    <define name="mobile-portal-settings-path"
+            class="java.lang.String">/m/settings/</define>
+
+    <define name="src-servlet-no-session-mappings" abstract="true" class="com.oilspace.apps.services.appserver.servlet.target.TargetMapping[]">
+        <define-default ref="src-static-servlet-config"/>
+
+        <item ref="servlet:mapping">
+            <define name="path">/</define>
+            <define name="servlet" class="com.oilspace.apps.services.appserver.servlet.staticcontent.StaticServlet">
+                <uses ref="static-content-resolver"/>
+            </define>
+        </item>
+
+        <define name="wsdl-servlet" class="com.oilspace.apps.services.appserver.servlet.staticcontent.StaticServlet">
+            <uses class="com.oilspace.apps.resource.Sequence">
+                <uses class="com.oilspace.apps.resource.Resolver[]">
+                    <item ref="codepack-search-resolver"/>
+                    <item class="com.oilspace.apps.resource.PrefixPath">
+                        <uses class="java.lang.String">content/html/wsdl</uses>
+                    </item>
+                    <item class="com.oilspace.apps.resource.Transform">
+                        <uses class="com.oilspace.apps.services.appserver.servlet.webapp.WSDLTransformer">
+                            <uses class="java.lang.String"><old-config name="PORTAL_BASE_URL"/></uses>
+                        </uses>
+                    </item>
+                </uses>
+            </uses>
+        </define>
+        <item ref="servlet:mapping">
+            <define name="path">/wsdl/*</define>
+            <define name="servlet" ref="wsdl-servlet"/>
+        </item>
+        <item ref="servlet:mapping">
+            <define name="path">/codepack/wsdl/*</define>
+            <define name="servlet" ref="wsdl-servlet"/>
+        </item>
+
+        <item ref="servlet:mapping">
+            <define name="path">/servlet/com.oilspace.apps.portal.data.sources.apps.internal.support.help.HelpServlet/*</define>
+            <define name="servlet" class="com.oilspace.apps.portal.data.sources.apps.internal.support.help.HelpServlet"/>
+        </item>
+        <item ref="servlet:mapping">
+            <define name="path">/servlet/com.oilspace.apps.stream.StreamServlet/*</define>
+            <define name="servlet" class="com.oilspace.apps.stream.StreamServlet">
+                <uses ref="streams"/>
+            </define>
+        </item>
+
+        <define name="updater-servlet" class="com.oilspace.apps.stream.UpdaterServlet">
+            <uses class="com.oilspace.apps.stream.UpdateListenerPool">
+                <uses class="com.oilspace.apps.stream.UpdateListenerPoolConfig">
+                    <property name="changeDispatcher" ref="feeds:change-dispatcher"/>
+
+                    <!-- time between server response and new PDA request.
+                         if there is no request within this time then update
+                         listener for the client will be discharged -->
+                    <property name="idleTime" unit="minutes">1</property>
+
+                    <!-- Interval between sweeps of the listener pool -->
+                    <property name="sweepPeriod" unit="minutes">5</property>
+                </uses>
+            </uses>
+        </define>
+        <item ref="servlet:with-ae-check">
+            <define name="servlet:ae-action">action:access</define>
+            <define name="servlet:ae-artifact">resource:services.portal.components.mobile-portal</define>
+            <define name="for" ref="servlet:mapping">
+                <define name="path">/updater/pda</define>
+                <define name="servlet" ref="updater-servlet">
+                    <define-default class="com.oilspace.apps.stream.PDAUpdateRenderer"/>
+                </define>
+            </define>
+        </item>
+        <item ref="servlet:with-ae-check">
+            <define name="servlet:ae-action">action:access</define>
+            <define name="servlet:ae-artifact">resource:services.portal.components.mobile-portal</define>
+            <define name="for" ref="servlet:mapping">
+                <define name="path">/updater/rim</define>
+                <define name="servlet" ref="updater-servlet">
+                    <define-default class="com.oilspace.apps.stream.GenericUpdateRenderer"/>
+                </define>
+            </define>
+        </item>
+
+        <define-default class="com.oilspace.apps.update.UpdateServletConfig">
+            <property name="updateWaitTime" unit="seconds">30</property>
+            <define-default class="com.oilspace.apps.update.UpdateListenerPool">
+                <uses class="com.oilspace.apps.update.UpdateListenerPoolConfig">
+                    <property name="sweepPeriod" unit="minutes">2</property>
+                </uses>
+            </define-default>
+        </define-default>
+        <item ref="servlet:mapping">
+            <define name="path">/update/news</define>
+            <define name="servlet" class="com.oilspace.apps.update.news.NewsUpdateServlet">
+                <uses class="com.oilspace.apps.channel.ChannelSet">
+                    <uses ref="channel-root-set"/>
+                    <uses class="java.lang.String[]">
+                        <item>cboard</item>
+                        <item>feeds</item>
+                        <item>custom-feed-news</item>
+                        <item>custom-bbs-news</item>
+                    </uses>
+                </uses>
+            </define>
+        </item>
+        <item ref="servlet:with-ae-check">
+            <define name="servlet:ae-action">action:access</define>
+            <define name="servlet:ae-artifact">resource:services.portal.components.mobile-portal</define>
+            <define name="for" ref="servlet:mapping">
+                <define name="path">/update/price</define>
+                <define name="servlet" class="com.oilspace.apps.update.price.PriceUpdateServlet">
+                    <uses ref="feeds:change-dispatcher"/>
+                </define>
+            </define>
+        </item>
+
+        <!-- akopylov ajax4companies -->
+        <item ref="servlet:with-ae-check">
+            <define name="servlet:ae-action">action:services.portal.components.enable</define>
+            <define name="servlet:ae-artifact">resource:services.portal.components.global-member-admin-panel</define>
+            <define name="for" ref="portal:pagelet-mapping">
+                <define name="portal:exchange-context" ref="portal:portal"/>
+                <define name="path">/ajax/companies</define>
+                <define name="pagelet" class="com.oilspace.apps.icompany.client.CompaniesAJAXPagelet">
+                    <uses ref="companies"/>
+                </define>
+            </define>
+        </item>
+
+        <item ref="portal:mobile">
+            <define name="for" ref="portal:pagelet-mapping">
+                <define name="portal:exchange-context" ref="portal:portal"/>
+                <define name="path" ref="mobile-portal-home-path"/>
+                <define name="pagelet" class="com.oilspace.apps.mobile.HomePagelet">
+                    <uses class="com.oilspace.apps.mobile.HomeCatalogueItem[]">
+                        <include-hook name="oilwatch-mobile-home-catalogue"/>
+                    </uses>
+                </define>
+            </define>
+        </item>
+
+        <item ref="portal:mobile">
+            <define name="for" ref="portal:pagelet-mapping">
+                <define name="portal:exchange-context" ref="portal:portal"/>
+                <define name="path">/m/contacts/</define>
+                <define name="pagelet" class="com.oilspace.apps.mobile.ContactsPagelet"/>
+            </define>
+        </item>
+
+        <item ref="portal:mobile">
+            <define name="for" ref="portal:pagelet-mapping">
+                <define name="portal:exchange-context" ref="portal:portal"/>
+                <define name="path">/m/help/</define>
+                <define name="pagelet"
+                        class="com.oilspace.apps.mobile.HelpPagelet">
+                    <uses class="com.oilspace.apps.mobile.HelpTopic[]">
+                        <include-hook name="oilwatch-mobile-help-items"/>
+                    </uses>
+                </define>
+            </define>
+        </item>
+
+        <item ref="portal:mobile">
+            <define name="for" ref="portal:pagelet-mapping">
+                <define name="portal:exchange-context" ref="portal:portal"/>
+                <define name="path" ref="mobile-portal-settings-path"/>
+                <define name="pagelet"
+                        class="com.oilspace.apps.mobile.SettingsPagelet">
+                    <uses class="com.oilspace.apps.mobile.SettingsPageletConfig">
+                        <property name="validationHandlerConfig"
+                                  ref="validation-handler-config"/>
+                        <property name="portalTypes"
+                                  ref="portal:portal-types"/>
+                        <property name="homePath"
+                                  ref="mobile-portal-home-path"/>
+                        <property name="passwordPath"
+                                  ref="mobile-portal-password-path"/>
+                    </uses>
+                </define>
+            </define>
+        </item>
+
+        <item ref="portal:mobile">
+            <define name="for" ref="portal:pagelet-mapping">
+                <define name="portal:exchange-context" ref="portal:portal"/>
+                <define name="path" ref="mobile-portal-password-path"/>
+                <define name="pagelet"
+                        class="com.oilspace.apps.mobile.ChangePasswordPagelet">
+                    <uses class="com.oilspace.apps.mobile.ChangePasswordPageletConfig">
+                        <property name="homePath"
+                                  ref="mobile-portal-home-path"/>
+                        <property name="settingsPath"
+                                  ref="mobile-portal-settings-path"/>
+                    </uses>
+                </define>
+            </define>
+        </item>
+
+        <include-hook name="oilwatch-update-servlets"/>
+        <item ref="servlet:mapping">
+            <define name="path">/banner</define>
+            <define name="servlet" class="com.oilspace.apps.banners.BannerServlet">
+                <uses ref="portal:banner-cache"/>
+            </define>
+        </item>
+
+        <when on="development">
+            <item ref="servlet:mapping">
+                <define name="path">/servlet/help/*</define>
+                <define name="servlet" class="com.oilspace.apps.documentation.DocumentationServlet"/>
+            </item>
+        </when>
+        <when noton="development">
+            <item ref="portal:with-security">
+                <define name="for" ref="servlet:mapping">
+                    <define name="path">/servlet/help/*</define>
+                    <define name="servlet" class="com.oilspace.apps.documentation.DocumentationServlet"/>
+                </define>
+            </item>
+        </when>
+
+        <item ref="servlet:mapping">
+            <define name="path">/servlet/bbs-upload</define>
+            <define name="servlet" class="com.oilspace.apps.channel.portal.BBSUpload">
+                <uses ref="channel-root-set"/>
+            </define>
+        </item>
+        <item ref="servlet:mapping">
+            <define name="path">/servlet/bbs-download</define>
+            <define name="servlet" class="com.oilspace.apps.channel.portal.BBSDownload"/>
+        </item>
+        <item ref="servlet:mapping">
+            <define name="path">/autologin</define>
+            <define name="servlet" class="com.oilspace.apps.session.servlet.AutologinServlet"/>
+        </item>
+        <item ref="servlet:mapping">
+            <define name="path">/monitor/echo</define>
+            <define name="servlet" class="com.oilspace.apps.monitor.EchoServlet"/>
+        </item>
+        <item ref="servlet:mapping">
+            <define name="path">/charts/saveData</define>
+            <define name="servlet" class="com.oilspace.apps.charts.ChartServlet"/>
+        </item>
+        <include-hook name="sso:sso-servlet-mappings"/>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/account_creation.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/aspect-security-admin.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/oilspace-admin-platts-categories.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/oilspace-admin-platts-packages.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/oilspace-admin-platts-probe.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/oilspace-admin-argus-categories.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/oilspace-admin-argus-probe.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/permission_source.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/platts_data_permissioning.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/platts_permissions_admin.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/provider2-static.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/provider3-static.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/provider4-static.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/provider7-static.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/fmcprovider-static.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/uomconverter.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/permission_source.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/admin-applet-versions.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/connection-monitor.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/lme.html</define>
+            <define name="to">/help/lme-applet.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/ice-indices.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/lme-warehouse-details.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/portal-messages-admin.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/genfutedit.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/domestic-account-admin.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/foreign-account-admin.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/help/aspect-federation-portals.html</define>
+            <define name="to">/aes/en/support.html</define>
+        </item>
+        <item ref="servlet:rewrite-mapping">
+            <define name="path">/m</define>
+            <define name="to" ref="mobile-portal-login-path"/>
+        </item>
+
+        <item ref="servlet:redirect-permanent-mapping">
+            <define name="path">/account/create.html</define>
+            <define name="to">https://signup.oilspace.com/</define>
+        </item>
+    </define>
+
+    <define name="src-private-servlet-mappings" abstract="true">
+        <item ref="portal:pagelet-mapping">
+            <define name="path">/tweak/*</define>
+            <define name="pagelet" class="com.oilspace.apps.tweak.browser.TweakPagelet"/>
+        </item>
+    </define>
+
+    <!-- channels -->
+    <define name="channel-root-set"
+            class="com.oilspace.apps.channel.ChannelRootSet">
+        <uses class="com.oilspace.apps.channel.IChannelFactory[]">
+            <item class="com.oilspace.apps.channel.impl.cboard.CompanyBoardChannelFactory">
+                <uses ref="feeds:change-dispatcher"/>
+                <uses>
+                    <indirect mode="relaxed" ref="rpc-company-news-server"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.channel.impl.feeds.CustomChannelFactory">
+                <uses class="java.lang.String">custom-feed-news</uses>
+            </item>
+
+            <item class="com.oilspace.apps.channel.impl.feeds.CustomChannelFactory">
+                <uses class="java.lang.String">custom-bbs-news</uses>
+            </item>
+
+            <item class="com.oilspace.apps.channel.impl.feeds.FeedsChannelFactory">
+                <uses ref="feeds:change-dispatcher"/>
+            </item>
+            <include-hook name="argus-channels-factory"/>
+        </uses>
+    </define>
+
+    <define name="custom-channel-provider" abstract="true"
+            class="com.oilspace.apps.channel.impl.feeds.CustomChannelProvider">
+        <uses class="java.lang.String" ref="provider_id"/>
+        <uses ref="channel-root-set"/>
+        <uses class="com.oilspace.apps.time.TimeBaseTimer">
+            <uses ref="time:real-timebase"/>
+        </uses>
+        <uses class="com.oilspace.apps.services.rpc.port.Port" ref="data_loader_port"/>
+    </define>
+
+    <define name="feeds-channels-data-loader-port">
+        <port class="com.oilspace.apps.channel.IChannelDataLoader" ref="rpc:one-of-n-sync-port-def">
+            <define name="address">channels/feeds-channels-data-loader</define>
+        </port>
+    </define>
+
+    <define name="bbs-channels-data-loader-port">
+        <port class="com.oilspace.apps.channel.IChannelDataLoader" ref="rpc:one-of-n-sync-port-def">
+            <define name="address">channels/bbs-channels-data-loader</define>
+        </port>
+    </define>
+	
+    <define name="feeds-channel-provider" ref="custom-channel-provider">
+        <define name="provider_id">custom-feed-news</define>
+        <define name="data_loader_port" ref="feeds-channels-data-loader-port"/>
+        <define name="default-custom-channel-provider-listener"
+                ref="rpc-clickstream-persister"/>
+    </define>
+
+    <define name="bbs-channel-provider" ref="custom-channel-provider">
+        <define name="provider_id">custom-bbs-news</define>
+        <define name="data_loader_port" ref="feeds-channels-data-loader-port"/>
+    </define>
+
+    <define name="custom-channel-provider-factory"
+            class="com.oilspace.apps.channel.impl.feeds.CustomChannelProviderFactory">
+        <uses class="com.oilspace.apps.channel.impl.feeds.CustomChannelProvider[]">
+            <item ref="feeds-channel-provider"/>
+            <item ref="bbs-channel-provider"/>
+        </uses>
+    </define>
+
+    <define name="streams-timer" class="com.oilspace.apps.time.TimeBaseTimer">
+        <uses ref="time:real-timebase"/>
+    </define>
+
+    <!-- streams -->
+    <define name="streams-config">
+        <interface class="com.oilspace.apps.stream.StreamsConfig"/>
+        <interface class="com.oilspace.apps.stream.BufferBudgetsConfig"/>
+        <interface class="com.oilspace.apps.stream.StreamHandlerCacheConfig"/>
+
+        <property name="timer" ref="streams-timer"/>
+        <property name="heartbeatPeriod" unit="seconds">15</property>
+
+        <!-- zlib compression level: -1 means default, 0 means no compression,
+             1 means fastest, 9 means best. -->
+        <property name="compressionLevel">5</property>
+        
+        <property name="userBytesLimit">5000000</property>
+        <property name="userBuffersLimit">5</property>
+
+        <property name="handlerCacheSize">1000</property>
+        <property name="handlerCacheSweepPeriod" unit="minutes">5</property>
+        <property name="stopWritingRunner"
+                  class="com.oilspace.apps.common.workqueue.SimpleWorkQueue">
+            <uses class="com.oilspace.apps.common.workqueue.SimpleWorkQueueConfig">
+                <property name="name">StreamHandlerCache work queue</property>
+                <property name="maxConcurrency">1</property>
+                <property name="watchdogConfig" ref="null"/>
+            </uses>
+        </property>
+    </define>
+
+    <define name="stream-handler-cache"
+            class="com.oilspace.apps.stream.StreamHandlerCache">
+        <uses ref="streams-config"/>
+    </define>
+
+    <define name="streams" class="com.oilspace.apps.stream.Streams">
+        <uses ref="streams-config"/>
+        <uses ref="stream-handler-cache"/>
+        <uses class="com.oilspace.apps.stream.BufferBudgets">
+            <uses ref="streams-config"/>
+        </uses>
+        <uses class="com.oilspace.apps.common.workqueue.SimpleWorkQueue">
+            <uses class="com.oilspace.apps.common.workqueue.SimpleWorkQueueConfig">
+                <property name="name">Streams work queue</property>
+                <property name="maxConcurrency">10000</property>
+                <property name="watchdogConfig" ref="workqueue-watchdog-config"/>
+            </uses>
+        </uses>
+        <uses class="com.oilspace.apps.stream.IStreamProvider[]">
+            <item class="com.oilspace.apps.channel.portal.ChannelStreamProvider">
+                <uses ref="channel-root-set"/>
+            </item>
+            <include-hook name="oilwatch-stream-provider-list"/>
+            <include-hook name="aspect-stream-provider-list"/>
+        </uses>
+    </define>
+
+    <!-- pricing datsources config -->
+    <define-default class="com.oilspace.apps.portal.data.sources.apps.feeds.LiveReferences"/>
+
+
+    <!-- Storage subsystem -->
+    <define name="file-storage"
+            class="com.oilspace.apps.filestorage.FileStorage">
+        <uses ref="default-database"/>
+
+        <uses class="com.oilspace.apps.filestorage.FileStorageConfig">
+            <!-- Root dir mapping -->
+            <property name="rootDir"><old-config name="PERSISTENT"/>/file-store</property>
+        </uses>
+    </define>
+
+
+    <!-- session stuff -->
+    <define name="rpc-session-broadcasts"
+            class="com.oilspace.apps.session.common.Broadcasts"
+            ref="rpc:broadcast-port-def">
+        <define name="address">session-broadcasts</define>
+    </define>
+
+    <define name="rpc-session-server"
+            class="com.oilspace.apps.session.common.RPCSessionServer"
+            ref="rpc:one-of-n-sync-port-def">
+        <define name="address">session-server</define>
+    </define>
+
+    <define-default class="com.oilspace.apps.session.client.SessionCache">
+        <uses><port ref="rpc-session-broadcasts"/></uses>
+        <uses ref="rpc-session-server"/>
+
+        <uses>
+            <interface class="com.oilspace.apps.cache.SweepingCacheConfig"/>
+            <interface class="com.oilspace.apps.cache.ExpiringValueLoaderConfig"/>
+
+            <!-- Maximum size of the cache, in sessions -->
+            <property name="maxSize">750</property>
+
+            <!-- Maximum lifetime for an entry -->
+            <property name="valueLifetime" unit="hours">2</property>
+
+            <!-- Interval between sweeps of the cache -->
+            <property name="cacheSweepInterval" unit="hours">1</property>
+        </uses>
+    </define-default>
+
+    <!-- session id length -->
+    <define name="session-id-length" class="int">11</define>
+
+    <define name="session-server">
+        <port ref="rpc-session-server"/>
+        <bind class="com.oilspace.apps.session.server.SessionServer">
+            <uses ref="rpc-session-broadcasts"/>
+            <uses ref="default-database"/>
+            <uses class="com.oilspace.apps.session.server.SessionIdGen">
+                <uses ref="secure-prng"/>
+                <uses ref="session-id-length"/>
+            </uses>
+            <uses class="com.oilspace.apps.common.occasionaltask.OccasionalTaskConfig">
+                <property name="startTime"></property>
+                <property name="period" unit="minutes">10</property>
+                <property name="maxDeviation" unit="minutes">1</property>
+                <property name="port">
+                    <port class="com.oilspace.apps.common.occasionaltask.OccasionalTaskBroadcasts" ref="rpc:broadcast-port-def">
+                        <define name="address">session-server-expiry-task</define>
+                    </port>
+                </property>
+            </uses>
+        </bind>
+    </define>
+
+    <define name="shared-session-key-server" class="com.oilspace.apps.session.share.ShareSessionKeyServer">
+        <uses ref="default-database"/>
+        <uses ref="secure-prng"/>
+    </define>
+
+    <define name="validation-handler-config" class="com.oilspace.apps.validation.ValidationHandlerConfig">
+        <property name="companies" ref="companies"/>
+        <property name="portalTypes" ref="portal:portal-types"/>
+        <property name="languages" ref="portal:languages"/>
+        <property name="timeZoneIds" class="java.lang.String[]">
+            <item>Etc/GMT+12</item>
+            <item>Pacific/Midway</item>
+            <item>HST</item>
+            <item>AST</item>
+            <item>PST</item>
+            <item>US/Arizona</item>
+            <item>America/Chihuahua</item>
+            <item>MST</item>
+            <item>CST</item>
+            <item>America/Mexico_City</item>
+            <item>Canada/Saskatchewan</item>
+            <item>America/Bogota</item>
+            <item>EST</item>
+            <item>America/Indiana/Knox</item>
+            <item>Canada/Atlantic</item>
+            <item>America/Caracas</item>
+            <item>America/Santiago</item>
+            <item>CNT</item>
+            <item>America/Argentina/Buenos_Aires</item>
+            <item>Etc/GMT+2</item>
+            <item>Atlantic/Azores</item>
+            <item>Atlantic/Cape_Verde</item>
+            <item>Africa/Casablanca</item>
+            <item>Europe/London</item>
+            <item>GMT</item>
+            <item>Europe/Amsterdam</item>
+            <item>Europe/Belgrade</item>
+            <item>Europe/Brussels</item>
+            <item>Europe/Sarajevo</item>
+            <item>Europe/Athens</item>
+            <item>Europe/Bucharest</item>
+            <item>Africa/Cairo</item>
+            <item>Africa/Harare</item>
+            <item>Europe/Helsinki</item>
+            <item>Asia/Jerusalem</item>
+            <item>Asia/Baghdad</item>
+            <item>Asia/Kuwait</item>
+            <item>Europe/Moscow</item>
+            <item>Africa/Nairobi</item>
+            <item>Asia/Tehran</item>
+            <item>Asia/Muscat</item>
+            <item>Asia/Yerevan</item>
+            <item>Asia/Kabul</item>
+            <item>Asia/Karachi</item>
+            <item>IST</item>
+            <item>Asia/Katmandu</item>
+            <item>Asia/Almaty</item>
+            <item>Asia/Dhaka</item>
+            <item>Asia/Rangoon</item>
+            <item>Asia/Bangkok</item>
+            <item>Asia/Krasnoyarsk</item>
+            <item>Asia/Chongqing</item>
+            <item>Asia/Irkutsk</item>
+            <item>Asia/Kuala_Lumpur</item>
+            <item>Australia/Perth</item>
+            <item>Asia/Taipei</item>
+            <item>Asia/Tokyo</item>
+            <item>Asia/Seoul</item>
+            <item>Asia/Yakutsk</item>
+            <item>Australia/Adelaide</item>
+            <item>Australia/Darwin</item>
+            <item>Australia/Brisbane</item>
+            <item>Australia/Canberra</item>
+            <item>Pacific/Guam</item>
+            <item>Australia/Hobart</item>
+            <item>Asia/Vladivostok</item>
+            <item>Asia/Magadan</item>
+            <item>Pacific/Auckland</item>
+            <item>Pacific/Fiji</item>
+            <item>Pacific/Tongatapu</item>
+        </property>
+    </define>
+    
+    <when defined="EXTERNAL_DIRECTORY_AUTH">
+        <define-default class="com.oilspace.apps.validation.ValidationHandlerBlank">
+            <uses ref="validation-handler-config"/>
+        </define-default>
+    </when>
+    <when notdefined="EXTERNAL_DIRECTORY_AUTH">
+        <define-default class="com.oilspace.apps.validation.ValidationHandler">
+            <uses ref="validation-handler-config"/>
+        </define-default>
+    </when>
+
+    <define name="companies" class="com.oilspace.apps.icompany.client.Companies">
+        <uses>
+            <port class="com.oilspace.apps.icompany.client.IRemoteInvalidation"
+                  ref="rpc:broadcast-port-def">
+                <define name="address">icompanies/invalidation</define>
+            </port>
+        </uses>
+        <uses ref="default-database"/>
+        <uses ref="users:users"/>
+        <uses class="com.oilspace.apps.cache.ExpiringValueLoaderConfig">
+            <property name="valueLifetime" unit="minutes">30</property>
+        </uses>
+    </define>
+
+    <!-- stylesheet stuff -->
+    <define name="rpc-stylesheet-server"
+            class="com.oilspace.apps.stylesheet.common.IStylesheetServer"
+            ref="rpc:one-of-n-sync-port-def">
+        <define name="address">stylesheet/server</define>
+    </define>
+
+    <define-default ref="compiled-stylesheet-source-wrapper">
+        <define name="compiled-stylesheet-source" class="com.oilspace.apps.stylesheet.client.StylesheetCompiler">
+            <uses class="com.oilspace.apps.stylesheet.client.StylesheetCompilerConfig">
+                <property name="saveXSLs"><old-config name="IN_DEVELOPMENT"/></property>
+                <property name="saveXSLsRoot"><old-config name="TEMP"/>/xsl</property>
+            </uses>
+            <uses ref="rpc-stylesheet-server"/>
+        </define>
+    </define-default>
+
+    <define name="stylesheet-server">
+        <port ref="rpc-stylesheet-server"/>
+        <bind class="com.oilspace.apps.stylesheet.server.StylesheetServer">
+            <uses ref="codepack-search-resolver"/>
+            <uses ref="stylesheet-resource-source-wrapper">
+                <define name="stylesheet-resource-source" class="com.oilspace.apps.stylesheet.server.StylesheetResourceLoader"/>
+            </uses>
+            <uses class="com.oilspace.apps.stylesheet.server.StylesheetSourceCache">
+                <uses class="com.oilspace.apps.cache.CacheConfig">
+                    <property name="maxSize">5000000</property>
+                </uses>
+            </uses>
+            <uses class="com.oilspace.apps.stylesheet.server.StylesheetPrefix[]">
+                <define name="prefix" class="com.oilspace.apps.stylesheet.server.Prefix">
+                    <property name="prefix" ref="from"/>
+                    <property name="resolver" class="com.oilspace.apps.resource.Sequence">
+                        <uses class="com.oilspace.apps.resource.Resolver[]">
+                            <item ref="codepack-resolver"/>
+                            <item class="com.oilspace.apps.resource.Prefix">
+                                <uses ref="to" class="java.lang.String"/>
+                            </item>
+                        </uses>
+                    </property>
+                </define>
+           
+                <item ref="prefix">
+                    <define name="from">/core</define>
+                    <define name="to">/core/content/templates</define>
+                </item>
+                <include-hook name="oilwatch-stylesheet-prefixes"/>
+                <include-hook name="aspect-stylesheet-prefixes"/>
+                <include-hook name="pfshooks:stylesheet-prefixes"/>
+            </uses>
+            <!-- portal identifiers -->
+            <uses ref="portal:portal-types"/>
+        </bind>
+    </define>
+
+
+    <!-- Localization support -->
+    <define-default class="com.oilspace.apps.localization.DictionaryReader">
+        <uses ref="codepack-resolver"/>
+    </define-default>
+
+    <define name="news-date-time-formatter"
+            class="com.oilspace.apps.localization.TimeFormatter">
+        <uses class="com.oilspace.apps.localization.TimeFormatterConfig[]">
+            <item>
+                <property name="locale">en</property>
+                <property name="format">MMM dd HH:mm</property>
+            </item>
+            <item>
+                <property name="locale">ru</property>
+                <property name="format">dd MMM HH:mm</property>
+            </item>
+            <item>
+                <property name="locale">zh</property>
+                <property name="format">MM-dd HH:mm</property>
+            </item>
+        </uses>
+    </define>
+
+    <define name="medium-date-formatter"
+            class="com.oilspace.apps.localization.TimeFormatter">
+        <uses class="com.oilspace.apps.localization.TimeFormatterConfig[]">
+            <item>
+                <property name="locale">en</property>
+                <property name="format">MMM dd, yyyy</property>
+            </item>
+            <item>
+                <property name="locale">ru</property>
+                <property name="format">dd MMM yyyy</property>
+            </item>
+            <item>
+                <property name="locale">zh</property>
+                <property name="format">yyyy-MM-dd</property>
+            </item>
+        </uses>
+    </define>
+
+    <define name="full-date-formatter"
+            class="com.oilspace.apps.localization.TimeFormatter">
+        <uses class="com.oilspace.apps.localization.TimeFormatterConfig[]">
+            <item>
+                <property name="locale">en</property>
+                <property name="format">MMMM dd, yyyy</property>
+            </item>
+            <item>
+                <property name="locale">ru</property>
+                <property name="format">dd MMMM yyyy</property>
+            </item>
+            <item>
+                <property name="locale">zh</property>
+                <property name="format">yyyy-MMMM-dd</property>
+            </item>
+        </uses>
+    </define>
+
+    <define name="medium-date-time-formatter"
+            class="com.oilspace.apps.localization.TimeFormatter">
+        <uses class="com.oilspace.apps.localization.TimeFormatterConfig[]">
+            <item>
+                <property name="locale">en</property>
+                <property name="format">MMM dd, yyyy HH:mm</property>
+            </item>
+            <item>
+                <property name="locale">ru</property>
+                <property name="format">dd MMM yyyy HH:mm</property>
+            </item>
+            <item>
+                <property name="locale">zh</property>
+                <property name="format">yyyy-MMM-dd HH:mm</property>
+            </item>
+        </uses>
+    </define>
+
+    <define name="time-formatter"
+            class="com.oilspace.apps.localization.TimeFormatter">
+        <uses class="com.oilspace.apps.localization.TimeFormatterConfig[]">
+            <item>
+                <property name="locale">en</property>
+                <property name="format">HH:mm</property>
+            </item>
+            <item>
+                <property name="locale">ru</property>
+                <property name="format">HH:mm</property>
+            </item>
+            <item>
+                <property name="locale">zh</property>
+                <property name="format">HH:mm</property>
+            </item>
+        </uses>
+    </define>
+
+    <!-- tweak remote directory server support -->
+    <define name="tweak-remote-distmap-config"
+            class="com.oilspace.apps.services.rpc.distmap.DistributedMapConfig">
+        <property name="mappingsPort">
+            <port class="com.oilspace.apps.services.rpc.distmap.MappingsListener" ref="rpc:broadcast-port-def">
+                <define name="address">tweak-remote-mappings</define>
+            </port>
+        </property>
+        <property name="requestsPort">
+            <port class="com.oilspace.apps.services.rpc.distmap.RequestsListener" ref="rpc:broadcast-port-def">
+                <define name="address">tweak-remote-requests</define>
+            </port>
+        </property>
+        <property name="refreshPeriod" unit="minutes">1</property>
+        <property name="sweepPeriod" unit="minutes">1</property>
+        <property name="responsesWaitTime" unit="seconds">20</property>
+    </define>
+
+    <define name="tweak-required">
+        <item class="com.oilspace.apps.tweak.remote.Client">
+            <uses ref="tweak-remote-distmap-config"/>
+        </item>
+        <item class="com.oilspace.apps.tweak.remote.Server">
+            <uses ref="tweak-remote-distmap-config"/>
+            <uses>
+                <port class="com.oilspace.apps.tweak.Queryable"
+                      ref="rpc:anon-sync-port-def"/>
+            </uses>
+        </item>
+    </define>
+
+    <define name="tweak-logging"
+            class="com.oilspace.apps.tweak.logging.Logging">
+        <uses class="java.lang.String"><old-config name="TWEAK_LOG_FILE"/></uses>
+        <uses class="com.oilspace.apps.tweak.logging.LoggedValue[]">
+            <define name="log" class="com.oilspace.apps.tweak.logging.LoggedValue">
+                <uses ref="path" class="java.lang.String"/>
+                <uses class="long" unit="minutes">10</uses>
+            </define>
+                
+            <item ref="log">
+                <define name="path">/load/value/*</define>
+            </item>
+            <item ref="log">
+                <define name="path">/linux-stat/value/ctxt</define>
+            </item>
+            <item ref="log">
+                <define name="path">/linux-stat/value/cpu/*</define>
+            </item>
+            <item ref="log">
+                <define name="path">/linux-stat/value/page/*</define>
+            </item>
+            <item ref="log">
+                <define name="path">/os-vm/value/*</define>
+            </item>
+            <item ref="log">
+                <define name="path">/linux-stat/value/swap/*</define>
+            </item>
+            <item ref="log">
+                <define name="path">/linux-proc-times/value/*</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/*/bytesReceivedCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/*/bytesSentCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/*/receiveCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/*/sendCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async+transports/multicast/messageTransport/resendCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async+transports/multicast/messageTransport/badChecksumCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fclient/value/port/transportPort/transport/bytesReceivedCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fclient/value/port/transportPort/transport/bytesSentCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fclient/value/port/transportPort/transport/receiveCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fclient/value/port/transportPort/transport/sendCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fclient/value/port/transportPort/transport/messageTransport/resendCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fclient/value/port/transportPort/transport/messageTransport/badChecksumCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/one-of-n/transports/server/warnings</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/multicast/messageTransport/historySize</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/async transports/multicast/messageTransport/packetsSize</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.services.rpc.RPC/value/servers/%40size</define>
+            </item>
+            <item ref="log">
+                <define name="path">/http%3a%2f%2fschemas.oilspace.com%2fcore%2fcomponents%2ffeeds%2fchange-dispatcher/value/queue/totalWorkTime</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.common.workqueue.ThreadPool/value/itemsDoneCount</define>
+            </item>
+            <item ref="log">
+                <define name="path">/com.oilspace.apps.common.workqueue.ThreadPool/value/threadsCreatedCount</define>
+            </item>
+            <include-hook name="oilwatch-logged-values"/>
+        </uses>      
+    </define>
+
+    <define name="ae-log-replayer-service-port"
+          class="com.oilspace.apps.alterego.server.security.util.IAELogReplayer"
+          ref="rpc:broadcast-port-def">
+        <define name="address">ae/log-replayer</define>
+    </define>
+
+    <define name="ae-log-replayer-state-broadcast-port"
+          class="com.oilspace.apps.alterego.server.security.util.IAELogReplayerBroadcast"
+          ref="rpc:broadcast-port-def">
+        <define name="address">ae/log-replayer-state-broadcast</define>
+    </define>
+
+    <define name="ae-log-replayer-bind">
+        <port ref="ae-log-replayer-service-port"/>
+        <bind ref="ae-log-replayer-service"/>
+    </define>
+
+    <define name="ae-snapshots-required">
+        <item ref="ae-log-replayer-bind"/>
+    </define>
+
+    <define name="ae-log-replayer" class="com.oilspace.apps.alterego.server.security.util.AELogReplayer">
+        <uses ref="ae-store"/>
+    </define>
+
+    <define name="ae-log-replayer-service" class="com.oilspace.apps.alterego.server.security.util.AELogReplayerService">
+        <uses ref="ae-log-replayer"/>
+        <uses ref="ae-store"/>
+        <uses class="com.oilspace.apps.alterego.server.security.util.SnapshotSchedule">
+            <property name="timer" class="com.oilspace.apps.time.TimeBaseTimer">
+                <uses ref="time:real-timebase"/>
+            </property>
+            <property name="period" unit="hours">24</property>
+            <property name="onStart" class="java.lang.Boolean"><old-config name="AE_LOG_REPLAY_ON_START"/></property>
+        </uses>
+        <uses ref="ae-log-replayer-state-broadcast-port"/>
+        <uses class="java.lang.String"><old-config name="PERSISTENT"/>/ae-log-replayer-service.xml</uses>
+    </define>
+
+    <define name="ae-snapshot-store" class="com.oilspace.apps.alterego.server.security.store.impl.SnapshotStoreImpl">
+        <uses ref="default-database"/>
+    </define>
+
+    <!-- AE stuff -->
+    <define name="ae-store" class="com.oilspace.apps.alterego.server.security.store.ArtifactStoreProvider">
+        <uses>
+            <port class="com.oilspace.apps.alterego.server.security.store.Broadcasts" ref="rpc:broadcast-port-def">
+                <define name="address">ae/broadcasts</define>
+
+                <!-- AE broadcasts should be processed in-order -->
+                <define name="rpc:runner"
+                        class="com.oilspace.apps.common.workqueue.SingleThreadWorkQueue">
+                    <uses class="java.lang.String">AE broadcasts work queue</uses>
+                </define>
+            </port>
+        </uses>
+    </define>
+    <define name="ae-security-manager"
+            class="com.oilspace.apps.alterego.server.security.SecurityManager">
+        <uses ref="ae-store"/>
+    </define>
+
+    <define name="rpc-ae-security-manager"
+            class="com.oilspace.apps.alterego.server.security.IRPCSecurityManager"
+            ref="rpc:named-port-def">
+        <define name="port"><port ref="rpc:one-of-n-sync-port-def">
+            <define name="address">ae/security-manager</define>
+        </port></define>
+        <define name="names">
+            <item>alterego/server/security</item>
+            <item>alterego/server/security_admin</item>
+        </define>
+    </define>
+
+    <!-- AE server -->
+    <define name="ae-server-required">
+        <port ref="rpc-ae-security-manager"/>
+        <bind ref="ae-security-manager"/>
+    </define>
+
+    <define name="ae-scrubber" class="com.oilspace.apps.alterego.server.security.store.sql.Scrubber">
+        <uses ref="default-database"/>
+    </define>
+
+    <!-- Price Manager -->
+    <define name="rpc-price-manager" class="com.oilspace.apps.marketstate.persistence.common.IPriceManager"
+            ref="rpc:named-port-def">
+        <define name="port">
+            <port ref="rpc:one-of-n-sync-port-def">
+                <define name="address">price-manager</define>
+            </port>
+        </define>
+        <define name="names">
+            <item>marketstate/persistance/pricemanager</item>
+        </define>
+    </define>
+
+    <define name="priceman:flush-listeners"
+            class="com.oilspace.apps.marketstate.persistence.common.IPriceManagerCache"
+            ref="rpc:broadcast-port-def">
+        <define name="address">pricemanager/cache</define>
+    </define>
+
+    <define name="price-manager"
+            class="com.oilspace.apps.marketstate.persistence.server.PriceManager">
+        <uses ref="market-database"/>
+    </define>
+
+    <!-- RPC Tick Cache-->
+    <define name="priceman:market-data-source-port"
+            class="com.oilspace.apps.marketstate.persistence.common.MarketDataSource"
+            ref="rpc:named-port-def">
+        <define name="port">
+            <port ref="rpc:one-of-n-sync-port-def">
+                <define name="address">market-data-source</define>
+            </port>
+        </define>
+        <define name="names">
+            <item>market-data-source</item>
+        </define>
+    </define>
+
+    <define name="price-manager-cache" class="com.oilspace.apps.marketstate.persistence.server.PriceManagerCache">
+        <uses ref="price-manager"/>
+        <uses class="com.oilspace.apps.marketstate.persistence.server.PriceManagerCacheConfig">
+            <!-- Maximum size of the cache, in bytes -->
+            <property name="maxSize">10000000</property>
+
+            <!-- Maximum lifetime for an entry -->
+            <property name="valueLifetime" unit="minutes">30</property>
+
+            <!-- Interval between sweeps of the cache -->
+            <property name="cacheSweepInterval" unit="hours">1</property>
+        </uses>
+    </define>
+
+    <define name="price-manager-server">
+        <item>
+           <port ref="rpc-price-manager"/>
+           <bind ref="price-manager-cache"/>
+        </item>
+        <item>
+            <port ref="priceman:flush-listeners"/>
+            <bind ref="price-manager-cache"/>
+        </item>
+    </define>
+
+    <!-- Filestage stuff -->
+    <define name="filestage-main" abstract="true"
+            class="com.oilspace.apps.common.filestage.Main">
+        <uses ref="priceman:flush-listeners"/>
+        <uses ref="config"/>
+    </define>
+
+    <define name="filestage-start">
+        <include-hook name="oilwatch-filestage"/>
+        <include-hook name="aspect-filestage"/>
+        <include-hook name="calendar-filestage"/>
+    </define>
+
+    <!-- Secure Pseudo-Random Number Generator -->
+    <define name="secure-prng" class="com.oilspace.apps.common.random.SecurePRNG"/>
+
+    <!-- cboards stuff -->
+    <define-default class="com.oilspace.apps.cboard.impl.feeds.CompanyBoardManager">
+        <uses ref="default-database"/>
+        <uses>
+            <port class="com.oilspace.apps.cboard.impl.feeds.IRPCCompanyBoardsInvalidator" ref="rpc:broadcast-port-def">
+                <define name="address">company-boards-invalidator</define>
+            </port>
+        </uses>
+    </define-default>
+
+    <define-default class="com.oilspace.apps.cboard.CompanyBoardHandler"/>
+
+    <define name="rpc-company-news-server"
+            class="com.oilspace.apps.cboard.impl.feeds.RPCCompanyNewsServer"
+            ref="rpc:one-of-n-sync-port-def">
+        <define name="address">company-news-server</define>
+    </define>
+
+    <define-default class="com.oilspace.apps.cboard.impl.feeds.CompanyNewsContentProvider">
+        <uses ref="default-database"/>
+        <uses ref="file-storage"/>
+        <uses ref="news-date-time-formatter"/>
+    </define-default>
+
+    <define name="cboard-server">
+        <port ref="rpc-company-news-server"/>
+        <bind class="com.oilspace.apps.cboard.impl.feeds.CompanyNewsServer">
+            <uses ref="feeds:news-server"/>
+            <uses ref="feeds:db-server"/>
+        </bind>
+    </define>
+
+    <define name="expiration-notification-port"
+            class="com.oilspace.apps.marketstate.expiration.IRPCNotified"
+            ref="rpc:broadcast-port-def">
+        <define name="address">expiration-and-wipedowns</define>
+    </define>
+
+    <!-- used in ExpirationScheduleManagerImpl -->
+    <define-default ref="expiration-notification-port"/>
+
+    <define name="expiration-listener"
+            class="com.oilspace.apps.marketstate.expiration.InstrumentExpirationManager">
+        <uses><port ref="expiration-notification-port"/></uses>
+    </define>
+
+    
+
+    <define-default class="com.oilspace.apps.authentication.UserPasswordChanges">
+        <uses ref="default-database"/>
+    </define-default>
+
+    <define-default class="com.oilspace.apps.authentication.PasswordChangeUI">
+        <uses ref="sso:portal-services"/>
+    </define-default>
+
+    <!-- general monitoring -->
+    <define name="load" class="com.oilspace.apps.tweak.external.Load"/>
+    <define name="linux-stat"
+            class="com.oilspace.apps.tweak.external.LinuxStat"/>
+    <define name="linux-proc-times"
+            class="com.oilspace.apps.tweak.external.LinuxProcTimes">
+        <uses class="java.lang.String"><old-config name="PID_DIR"/></uses>
+    </define>
+    <define name="os-vm"
+            class="com.oilspace.apps.tweak.external.OsVirtualMemory"/>
+
+    <!-- External target definitions -->
+
+    <!-- everything that is required implicitly for compatibility with
+         non-init-aware code -->
+    <define name="compat-required" sequential="true">
+        <item class="com.oilspace.apps.diags.StackTraceHook">
+        	<uses class="boolean"><old-config name="DISABLE_THREAD_DUMP"/></uses>
+        </item>
+        <item class="com.oilspace.apps.diags.StackTraceWriter"/>
+        <item class="com.oilspace.apps.diags.ContentionMonitor"/>
+        <item class="com.oilspace.apps.diags.EchoToLog"/>
+
+        <when defined="GROOVY_IN_TWEAK">
+	        <item class="com.oilspace.apps.diags.GroovyRunner">
+	            <default-constructor/>
+	        </item>
+        </when>
+
+        <item class="com.oilspace.apps.diags.JvmInfo"/>
+        <item class="com.oilspace.apps.services.common.debug.HijackOutputStreams"/>
+        <item>
+            <item ref="tweak-required"/>
+            <item ref="tweak-logging"/>
+            <item ref="load"/>
+            <item ref="linux-stat"/>
+            <item ref="linux-proc-times"/>
+            <item ref="os-vm"/>
+            <item class="com.oilspace.apps.tweak.config.ConfigDirectory"/>
+
+            <when on="development">
+                <!-- this is the guard that checks that all processes reachable
+                     through multicast are using the same config.  We use the
+                     core database connection params as a simple "config id" -->
+                <include>
+                    <define name="guard-port"
+                            ref="rpc:broadcast-port-def"
+                            class="com.oilspace.apps.services.rpc.guard.Broadcasts">
+                        <define name="address">guard</define>
+                    </define>
+
+                    <define-default class="java.lang.String"><old-config name="ORACLE_URL"/> <old-config name="ORACLE_USER"/> <old-config name="ORACLE_PASS"/></define-default>
+                    <item class="com.oilspace.apps.services.rpc.guard.Sender">
+                        <uses ref="guard-port"/>
+                    </item>
+                    <item>
+                        <bind class="com.oilspace.apps.services.rpc.guard.Checker"/>
+                        <port ref="guard-port"/>
+                    </item>
+                </include>
+            </when>
+        </item>
+    </define>
+
+
+    <!-- database preparation: initialize the database schema. -->
+
+    <define name="prepare-database-required" sequential="true">
+        <item ref="prepare-database"/>
+        <item class="com.oilspace.apps.init.Exit">
+            <uses class="java.lang.String">Database schema prepared.</uses>
+            <uses class="int">0</uses>
+        </item>
+    </define>
+
+    <define name="prepare-database" sequential="true">
+        <include ref="src-prepare-database"/>
+        <include-hook name="oilwatch-prepare-database"/>
+        <include-hook name="aspect-prepare-database"/>
+        <include-hook name="pfscorehooks:prepare-database"/>
+        <include-hook name="pfshooks:prepare-database"/>
+        <include-hook name="aggregator-prepare-database"/>
+        <include-hook name="calendar-prepare-database"/>
+    </define>
+
+
+    <!-- bootstrap procedure: initializes the environment from scratch. -->
+
+    <define name="bootstrap-required" sequential="true">
+        <item ref="bootstrap"/>
+        <item class="com.oilspace.apps.init.Exit">
+            <uses class="java.lang.String">Bootstrap done.</uses>
+            <uses class="int">0</uses>
+        </item>
+    </define>
+
+    <define name="bootstrap" sequential="true">
+        <!-- always check the init configuration validity here. -->
+        <item ref="lint"/>
+
+        <include ref="src-bootstrap"/>
+
+        <include-hook name="oilwatch-bootstrap"/>
+        <include-hook name="aspect-bootstrap"/>
+        <include-hook name="calendar-bootstrap"/>
+
+        <when old-noton="BOOTSTRAP_FOR_TESTS">
+            <include-hook name="pfscorehooks:bootstrap"/>
+            <include-hook name="pfshooks:bootstrap"/>
+        </when>
+    </define>
+
+
+    <!-- post-release procedure: prepares the environment to run the
+         new release -->
+
+    <define name="post-release-required" sequential="true">
+        <item ref="post-release"/>
+        <item class="com.oilspace.apps.init.Exit">
+            <uses class="java.lang.String">Post release actions done.</uses>
+            <uses class="int">0</uses>
+        </item>
+    </define>
+
+    <define name="post-release" sequential="true">
+        <!-- on production, post-release is not time sensitive, so always
+             check the init configuration validity here. -->
+        <when noton="development">
+            <item ref="lint"/>
+        </when>
+
+        <include ref="src-post-release"/>
+        <include-hook name="oilwatch-post-release"/>
+        <include-hook name="pfshooks:post-release"/>
+        <include-hook name="pfscorehooks:post-release"/>
+        <include-hook name="calendar-post-release"/>
+        <!-- aspect post-release is executed separated by
+             release scripts -->
+        <when on="development">
+            <include-hook name="aspect-post-release"/>
+        </when>
+
+        <!-- AlterEgo permissions updater -->
+        <when defined="add.account.permissions.for.companies">
+            <item ref="add-accounts-permissions"/>
+        </when>
+    </define>
+
+    <!-- src specific prepare-database bootstrap and post release -->
+
+    <define name="src-prepare-database" sequential="true">
+        <item class="com.oilspace.apps.database.actions.UpdateTables">
+             <uses class="java.lang.String">src</uses>
+             <uses ref="default-database"/>
+        </item>
+
+        <when old-noton="BOOTSTRAP_FOR_TESTS">
+            <item class="com.oilspace.apps.database.actions.UpdateTables">
+                <uses class="java.lang.String">market</uses>
+                <uses ref="market-database"/>
+            </item>
+        </when>
+
+        <item class="com.oilspace.apps.database.actions.RunActions">
+            <uses class="com.oilspace.apps.database.actions.Action[]">
+                <include ref="src-prepare-database-actions"/>
+            </uses>
+        </item>
+    </define>
+
+    <define name="src-prepare-database-actions"
+            class="com.oilspace.apps.database.actions.Action[]">
+        <include>
+            <!-- tables in market schema -->
+            <define-default ref="market-database"/>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">migrations</property>
+                    <property name="columns">
+                        <item>name varchar(200) not null primary key</item>
+                        <item>completed date not null</item>
+                        <item>cleaned_up date</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints"/>
+                    <property name="indices"/>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">markets</property>
+                    <property name="columns">
+                        <item>code varchar2(200)</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint markets_pk primary key (code)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties">organization index monitoring</property>
+                </uses>
+            </item>
+            
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">symbols</property>
+                    <property name="columns">
+                        <item>category varchar2(3) constraint symbols_category_nn not null</item>
+                        <item>code varchar2(200)</item>
+                        <item>description varchar2(200)</item>
+                        <item>contractstart date</item>
+                        <item>contractend date</item>
+                        <item>units varchar2(3) constraint symbols_units_nn not null</item>
+                        <item>currency varchar2(3) constraint symbols_currency_nn not null</item>
+                        <item>market varchar2(200) constraint symbols_market_nn not null</item>
+                        <item>lastpricedate date</item>
+                        <item>quotes varchar2(20)</item>
+                    </property>
+                    <property name="addColumns">
+                        <item>granularity number</item>
+                    </property>
+                    <property name="constraints">
+                        <item>constraint symbols_fk foreign key (market) references markets(code)</item>
+                        <item>constraint symbols_pk primary key (code)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties">monitoring</property>
+                </uses>
+            </item>
+            
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">history</property>
+                    <property name="columns">
+                        <item>code varchar2(200)</item>
+                        <item>bytecode char</item>
+                        <item>value number constraint history_value_nn not null</item>
+                        <item>valuedate date</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint history_pk primary key (code,bytecode,valuedate)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties">organization index compress monitoring</property>
+                </uses>
+            </item>
+            
+            <!-- ISO 4217 - Currency codes -->
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                    <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">iso_currency</property>
+                    <property name="columns">
+                        <!-- entity where this currency is used -->
+                        <item>entity varchar2(200)</item>
+                            
+                        <!-- currency name -->
+                        <item>currency varchar2(200)</item>
+                        
+                        <!-- alphabetic code -->
+                        <item>alphacode char(3)</item>
+                        
+                        <!-- numberic code -->
+                        <item>numcode number(3)</item>
+                        
+                        <!-- minor unit (presision) -->
+                        <item>minor number(1)</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints"/>
+                    <property name="indices"/>
+                    <property name="properties">monitoring</property>
+                </uses>
+            </item>
+                
+            <!-- Tables used by filestage for processing Platts data from ftp.platts.com -->
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">platts_prices_import</property>
+                    <property name="columns">
+                        <item>typ char</item>
+                        <item>code varchar2(8)</item>
+                        <item>batecode char</item>
+                        <item>valuedate date</item>
+                        <item>value number</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint platts_prices_import_pk primary key (typ,code,batecode,valuedate)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties">organization index compress monitoring</property>
+                </uses>
+            </item>
+            
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">platts_symbols_import</property>
+                    <property name="columns">
+                        <item>category varchar2(3)</item>
+                        <item>code1 varchar2(15)</item>
+                        <item>code2 varchar2(15)</item>
+                        <item>code varchar2(10)</item>
+                        <item>batecode varchar2(10)</item>
+                        <item>updatefrequency varchar2(10)</item>
+                        <item>currency varchar2(3)</item>
+                        <item>units varchar2(3)</item>
+                        <item>startdate date</item>
+                        <item>enddate date</item>
+                        <item>description varchar2(200)</item>
+                    </property>
+                    <property name="addColumns">
+                        <item>granularity number</item>
+                    </property>
+                    <property name="constraints"/>
+                    <property name="indices"/>
+                    <property name="properties">monitoring</property>
+                </uses>
+            </item>
+            
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">platts_prices_mean</property>
+                    <property name="columns">
+                        <item>code varchar2(8)</item>
+                        <item>valuedate date</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint platts_prices_mean_pk primary key (code,valuedate)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties">organization index compress monitoring</property>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">argus_code_categories</property>
+                    <property name="columns">
+                        <item>CODE varchar(9) not null</item>
+                        <item>TIMESTAMP_ID integer not null</item>
+                        <item>CONTFWD_PERIOD integer not null</item>
+                        <item>CATEGORY varchar(30) not null</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints"/>
+                    <property name="indices">
+                        <item>
+                            <property name="indexName">ARGUS_CODE_CATEGORIES_SYMBOL</property>
+                            <property name="columns">
+                                <item>CODE</item>
+                                <item>TIMESTAMP_ID</item>
+                                <item>CONTFWD_PERIOD</item>
+                            </property>
+                        </item>
+                    </property>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">branches</property>
+                    <property name="columns">
+                        <item>ID varchar2(8) not null</item>
+                        <item>MARKET varchar2(200) not null</item>
+                        <item>PATH varchar2(1024) not null</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint branches_pk primary key (id)</item>
+                        <item>constraint market_fk foreign key (market) references markets(code)</item>
+                    </property>
+                     <property name="indices"/>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">symbol_branch</property>
+                    <property name="columns">
+                        <item>SYMBOL_CODE varchar2(200) not null</item>
+                        <item>BRANCH_ID varchar2(8) not null</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint symbol_branch_pk primary key (symbol_code,branch_id)</item>
+                        <item>constraint symbol_code_fk foreign key (symbol_code) references symbols(code)</item>
+                        <item>constraint branch_id_fk foreign key (branch_id) references branches(id)</item>
+                    </property>
+                     <property name="indices"/>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">category_branch</property>
+                    <property name="columns">
+                        <item>CATEGORY varchar2(2) not null</item>
+                        <item>BRANCH_ID varchar2(8) not null</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint category_branch_pk primary key (category,branch_id)</item>
+                        <item>constraint cb_branch_id_fk foreign key (branch_id) references branches(id)</item>
+                    </property>
+                     <property name="indices"/>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">argus_fwd_period</property>
+                    <property name="columns">
+                        <item>CODE varchar(9) not null</item>
+                        <item>TIMING varchar(16) not null</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint argus_fwd_period_pk primary key (code)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+
+            <item class="com.oilspace.apps.database.actions.CreateTable">
+                <uses ref="market-database"/>
+                <uses class="com.oilspace.apps.database.actions.TableConfig">
+                    <property name="tableName">argus_timestamp</property>
+                    <property name="columns">
+                        <item>TIMESTAMP_ID number not null</item>
+                        <item>DESCRIPTION varchar(30) not null</item>
+                    </property>
+                    <property name="addColumns"/>
+                    <property name="constraints">
+                        <item>constraint argus_timestamp_pk primary key (TIMESTAMP_ID)</item>
+                    </property>
+                    <property name="indices"/>
+                    <property name="properties" ref="null"/>
+                </uses>
+            </item>
+        </include>
+    </define>
+
+    <define name="src-bootstrap" sequential="true">
+        <include ref="schema:create-database-users"/>
+        <include ref="src-prepare-database"/> 
+
+        <!-- mark all migrations done -->
+        <item class="com.oilspace.apps.database.actions.RunActions">
+            <uses class="com.oilspace.apps.database.actions.Action[]">
+                <item class="com.oilspace.apps.database.migration.Bootstrap">
+                    <uses ref="src-migrations"/>
+                </item>
+                <item class="com.oilspace.apps.database.migration.Bootstrap">
+                    <uses ref="market-migrations"/>
+                </item>
+            </uses>
+        </item>
+
+        <include ref="src-post-release"/>
+        <when old-noton="BOOTSTRAP_FOR_TESTS">
+            <include-hook name="gf-init-data"/>
+        </when>
+
+        <item ref="ae-server-required"/>
+        <item ref="users:server"/>
+        <item class="com.oilspace.apps.database.actions.RunActions">
+            <uses class="com.oilspace.apps.database.actions.Action[]">
+                <item class="com.oilspace.apps.icompany.client.Bootstrap">
+                    <uses ref="companies"/>
+                </item>
+                <item class="com.oilspace.apps.iuser.store.Bootstrap">
+                    <uses ref="users:account-creator"/>
+                </item>
+            </uses>
+        </item>
+
+        <!-- build symbol search indices.  the aspect bootstrap needs these -->
+        <item ref="symsearch:reindex"/>
+    </define>
+
+    <define name="src-post-release" sequential="true">
+        <include ref="src-prepare-database"/>
+
+        <item class="com.oilspace.apps.alterego.server.security.MandatoryArtifactValidator">
+            <uses ref="ae-security-manager"/>
+        </item>
+
+        <item class="com.oilspace.apps.database.migration.Janitor">
+            <uses class="long" unit="days">13</uses>
+            <uses ref="src-migrations"/>
+        </item>
+        
+        <item class="com.oilspace.apps.database.migration.Migrator">
+            <uses ref="src-migrations"/>
+        </item>
+
+        <when defined="IS_STAGING_PORTAL">
+            <item class="com.oilspace.apps.portal.staging.SetupStagingAccess">
+                <uses ref="default-database"/>
+                <uses ref="users:users"/>
+            </item>
+        </when>
+
+        <when old-noton="BOOTSTRAP_FOR_TESTS">
+            <item class="com.oilspace.apps.database.migration.Janitor">
+                <uses class="long" unit="days">13</uses>
+                <uses ref="market-migrations"/>
+            </item>
+            <item class="com.oilspace.apps.database.migration.Migrator">
+                <uses ref="market-migrations"/>
+            </item>
+
+            <!-- for the market schema -->
+            <item class="com.oilspace.apps.symbol.db.InitMarkets">
+                <uses ref="market-database"/>
+                <uses ref="markets"/>
+            </item>
+
+            <item class="com.oilspace.apps.symbol.db.InitBranches">
+                <uses ref="market-database"/>
+                <uses ref="branches"/>
+                <uses ref="symbols-branches"/>
+            </item>
+        </when>
+
+        <item class="com.oilspace.apps.session.server.SessionLogCleaner">
+            <uses ref="default-database"/>
+            <!-- 1098 = 366 * 3 = 3years  -->
+            <uses class="java.lang.Integer">1098</uses>
+        </item>
+
+        <item ref="init-expirations"/>
+    </define>
+     
+    <define name="markets" class="com.oilspace.apps.symbol.db.InitMarketsParser">
+        <uses class="java.lang.String"><old-config name="CODEPACK_ROOT"/>/config/init-markets.xml</uses>
+    </define>
+
+    <define name="branches" class="com.oilspace.apps.symbol.db.InitBranchesParser">
+        <uses class="java.lang.String"><old-config name="CODEPACK_ROOT"/>/config/init-branches.xml</uses>
+    </define>
+
+    <define name="symbols-branches" class="com.oilspace.apps.symbol.db.InitSymbolBranchParser">
+        <uses class="java.lang.String"><old-config name="CODEPACK_ROOT"/>/config/init-symbol_branch.xml</uses>
+    </define>
+
+    <define name="init-expirations" class="com.oilspace.apps.symbol.db.InitExpirations">
+        <uses class="com.oilspace.apps.symbol.db.InitExpirationsConfig">
+            <property name="database" ref="default-database"/>
+            <property name="filename"><old-config name="CODEPACK_ROOT"/>/config/expiration.xml</property>
+        </uses>
+    </define>
+
+    <define name="src-migrations"
+            class="com.oilspace.apps.database.migration.Migration[]">
+        <define-default ref="db:make-database">
+            <define name="db:datasource" ref="schema:core-datasource"/>
+            <define name="db:watchdog-period" unit="minutes">120</define>
+        </define-default>
+
+        <item>
+            <property name="name">Add internal_name column to companies2 table</property>
+            <property name="contactInfo">amonakhov@aspetenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item>
+                        ALTER TABLE companies2 ADD 
+                        ( internal_name VARCHAR(200) DEFAULT 'smth' NOT NULL )
+                    </item>
+                    <item>
+                        UPDATE companies2 SET internal_name = ('cn=' || name || ',ou=company,o=oilspace.com')
+                    </item>
+                    <item>
+                        ALTER TABLE companies2 ADD UNIQUE(internal_name)
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Revoke CC permission to manage aspect-developer role memebers</property>
+            <property name="contactInfo">isosedov@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    DELETE FROM ae_role_permissions WHERE
+                        role_id = (SELECT id FROM ae_roles WHERE name = 'customer-support') AND 
+                        artifact_id = (SELECT id FROM ae_roles WHERE name = 'aspect-developer') AND
+                        action_id = (SELECT id FROM ae_actions WHERE name = 'manage-role-members')
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OILwatch-0844</property>
+            <property name="contactInfo">kpiroumian@oilspace.com,vkryukov@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item>
+                        INSERT INTO future_expirations (contract, expiration)
+                                                VALUES ('NFRBX2005', 1128297600000)
+                    </item>
+                    <item>
+                        INSERT INTO future_expirations (contract, expiration) 
+                                                VALUES ('NFRBZ2005', 1128297600000)
+                    </item>
+                    <item>
+                        INSERT INTO future_expirations (contract, expiration) 
+                                                VALUES ('IFRBX2005', 1128297600000)
+                    </item>
+                    <item>
+                        INSERT INTO future_expirations (contract, expiration) 
+                                                VALUES ('IFRBZ2005', 1128297600000)
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">China-0085 (2nd time)</property>
+            <property name="contactInfo">mzhang@oilspace.com, dwragg@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item>update users set portal = 'oilspace' where portal is null</item>
+                    <item>alter table users modify (portal not null)</item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OILwatch-0884 (desktop-access to all users)</property>
+            <property name="contactInfo">MaximAnniuk@oilspace.com, MikePechyonkin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.alterego.server.security.GrantRoleToUsersMigration">
+                <uses ref="ae-security-manager"/>
+                <uses class="java.lang.String">role:desktop-portal-user</uses>
+                <uses ref="users:users"/>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OILwatch-0884 (mobile-access to all users)</property>
+            <property name="contactInfo">MaximAnniuk@oilspace.com, MikePechyonkin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.alterego.server.security.GrantRoleToUsersMigration">
+                <uses ref="ae-security-manager"/>
+                <uses class="java.lang.String">role:mobile-portal-user</uses>
+                <uses ref="users:users"/>
+            </property>
+        </item>
+
+        <when noton="development">
+            <item>
+                <property name="name">Lucene upgrade OILwatch-1355-1</property>
+                <property name="contactInfo">MarlenAntonyan@oilspace.com</property>
+                <property name="action"
+                          class="com.oilspace.apps.integration.common.market.server.UpdateSearchIndexes">
+                    <uses ref="symsearch:reindex-config"/>
+                </property>
+            </item>
+        </when>
+
+        <item>
+            <property name="name">Fix HRC Steel expirations</property>
+            <property name="contactInfo">SergeyZyrin@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    DELETE FROM future_expirations WHERE contract like 'FFHRC%'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Fix ICE ASCI expirations</property>
+            <property name="contactInfo">AndrewMcGregor@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    DELETE FROM future_expirations WHERE contract like 'IFCRD%'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Rebranding Aspect Enterprise Solutions 1 (switch users from oilspacenew portal to aes portal)</property>
+            <property name="contactInfo">MikePechyonkin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.portal.SwitchUserPortalMigration">
+                <uses class="com.oilspace.apps.portal.SwitchUserPortalMigrationConfig">
+                    <property name="users" ref="users:users"/>
+                    <property name="oldPortalId">oilspacenew</property>
+                    <property name="newPortalId">aes</property>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct granularity for CBOT symbols (OW-1376)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    update futures f set f.value = f.value * 100 where future like '%soybeans%'
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Fix IFNCF expirations</property>
+            <property name="contactInfo">AndreyAlyukhanov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    delete from future_expirations
+                        where
+                        contract like 'IFNCF%2011'
+                        or contract like 'IFNCF%2012'
+                        or contract like 'IFNCF%2013'
+                        or contract like 'IFNCF%2014'
+                        or contract like 'IFATW%2011'
+                        or contract like 'IFATW%2012'
+                        or contract like 'IFATW%2013'
+                        or contract like 'IFATW%2014'
+                        or contract like 'IFAFR%2011'
+                        or contract like 'IFAFR%2012'
+                        or contract like 'IFAFR%2013'
+                        or contract like 'IFAFR%2014'                    
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Remove obsolete aspect-federation panel from users' pages</property>
+            <property name="contactInfo">amonakhov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.portal.yapf.RemoveObsoletePanelMigration">
+                <uses class="com.oilspace.apps.portal.yapf.RemoveObsoletePanelConfig">
+                    <property name="users" ref="users:users"/>
+                    <property name="obsoletePanel">aspect-federation-portals</property>
+                    <property name="layoutManager" ref="portalimpl:layout-manager"/>
+                </uses>
+            </property>
+        </item>
+         
+        <item>
+            <property name="name">Decommission old OILspace portal skin (ASPECT-1202)</property>
+            <property name="contactInfo">igolovin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    update users set portal = 'aes' where portal = 'oilspace'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Withdraw role Aspect Adminisrator from all users (ASPECT-210)</property>
+            <property name="contactInfo">amonakhov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.alterego.server.security.WithdrawRoleFromUsersMigration">
+                <uses ref="ae-security-manager"/>
+                <uses class="java.lang.String">role:services.aspect.aspect-admin</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Drop obsolete table COMPANYNEWS_CONTENT from CORE</property>
+            <property name="contactInfo">amonakhov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.DropTable">
+                <uses class="java.lang.String">COMPANYNEWS_CONTENT</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Drop obsolete table COMPANYBOARDS from CORE</property>
+            <property name="contactInfo">amonakhov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.DropTable">
+                <uses class="java.lang.String">COMPANYBOARDS</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-2086: Move old RTP feed items to new paths</property>
+            <property name="contactInfo">astepanov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    update feeds_db3 set path = path || '.0'
+                        where path like 'page.dynamic.realtime.%'
+                        and path not like 'page.dynamic.realtime.%.%'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Drop obsolete table AUDIT_LOG from CORE</property>
+            <property name="contactInfo">amonakhov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.DropTable">
+                <uses class="java.lang.String">AUDIT_LOG</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-183 rename CBOT history role label</property>
+            <property name="contactInfo">dyaitskov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses class="java.lang.String">
+                    update AE_ROLES set display_name = 'CBOT History Pricing',
+                        description = 'CBOT History Pricing Subscriber'
+                        where name = 'cbot-user'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">ASPECT-3126 - modify become_history table</property>
+            <property name="contactInfo">dbabin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="default-database"/>
+                <uses class="java.lang.String">
+                    ALTER TABLE become_history ADD TYPE VARCHAR2(24 BYTE)
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-193: Role and Subscription reorganization (part 2) src</property>
+            <property name="contactInfo">pavelchebykin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.alterego.server.security.util.AEDisplayMigration">
+                <uses class="java.lang.String[]">
+                    <item>role:company-admin</item>
+                    <item>role:services.portal.components.forex</item>
+                    <item>role:applet-verions-manager</item>
+                    <item>role:connection-monitor-user</item>
+                    <item>role:customer-support</item>
+                    <item>role:desktop-portal-user</item>
+                    <item>role:futures-admin</item>
+                    <item>role:mobile-portal-user</item>
+                    <item>role:portal-banners-admin</item>
+                    <item>role:portal-messages-admin</item>
+                    <item>role:sessions-admin</item>
+                    <item>role:system-admin</item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-226: add ldap.disable-time to USER_ATTRIBUTES</property>
+            <property name="contactInfo">astepanov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item> <!-- for disabled users with available ldap.user-last-login* attributes -->
+                        insert into user_attributes (user_id, key, type, value)
+                        select distinct ua.user_id, 'ldap.disable-time', 'S', max(value)
+                        from user_attributes ua, users u
+                        where
+                            u.user_id = ua.user_id and u.disabled = 1
+                            and type = 'S'
+                            and ua.key in ('ldap.user-last-login',
+                                           'ldap.user-last-login-dde',
+                                           'ldap.user-last-login-rtd',
+                                           'ldap.user-last-login-mobile')
+                            and disabled = 1
+                        group by ua.user_id
+                    </item>
+                    <item> <!-- for other disabled users -->
+                        insert into user_attributes (user_id, key, type, value)
+                        select distinct ua.user_id, 'ldap.disable-time', 'S', 0
+                        from user_attributes ua, users u
+                        where
+                            u.user_id = ua.user_id and u.disabled = 1
+                            and (type != 'S'
+                                and ua.key in ('ldap.user-last-login',
+                                               'ldap.user-last-login-dde',
+                                               'ldap.user-last-login-rtd',
+                                               'ldap.user-last-login-mobile')
+                                or not exists (select key from user_attributes
+                                               where key in ('ldap.user-last-login',
+                                                             'ldap.user-last-login-dde',
+                                                             'ldap.user-last-login-rtd',
+                                                             'ldap.user-last-login-mobile')
+                                               and user_id = ua.user_id)
+                                )
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-226: user account type update</property>
+            <property name="contactInfo">astepanov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item>update user_attributes set value = 'INTERNAL', type='S' where key = 'ldap.user-account-type' and value = 'standard'</item>
+                    <item>update user_attributes set value = 'TRIAL', type='S' where key = 'ldap.user-account-type' and value = 'trial'</item>
+                    <item>update user_attributes set value = 'SUBSCRIBER', type='S' where key = 'ldap.user-account-type' and value = 'subscriber'</item>
+                    <item>update user_attributes set value = 'UNKNOWN', type='S' where key = 'ldap.user-account-type' and (value not in ('SUBSCRIBER', 'TRIAL', 'INTERNAL') or value is null)</item>
+                    <item><!-- insert UNKNOWN if not exist -->
+                        insert into user_attributes (user_id, key, type, value)
+                        select u.user_id, 'ldap.user-account-type', 'S', 'UNKNOWN' type
+                        from users u
+                        left outer join user_attributes ua
+                        on u.user_id = ua.user_id and key = 'ldap.user-account-type'
+                        where not exists (select key from user_attributes where user_id=ua.user_id and key = 'ldap.user-account-type')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <!--item>
+            <property name="name">DSC-226: AE log replay</property>
+            <property name="contactInfo">astepanov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.alterego.server.security.util.AELogMigration">
+                <uses ref="ae-store"/>
+                <uses ref="ae-log-replayer"/>
+            </property>
+        </item-->
+
+        <item>
+            <property name="name">DSC-224: Switch users from tnkredirect portal to aes portal</property>
+            <property name="contactInfo">npisnyachevsky@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.portal.SwitchUserPortalMigration">
+                <uses class="com.oilspace.apps.portal.SwitchUserPortalMigrationConfig">
+                    <property name="users" ref="users:users"/>
+                    <property name="oldPortalId">tnkredirect</property>
+                    <property name="newPortalId">aes</property>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-224: Switch users from nobleredirect portal to aes portal</property>
+            <property name="contactInfo">npisnyachevsky@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.portal.SwitchUserPortalMigration">
+                <uses class="com.oilspace.apps.portal.SwitchUserPortalMigrationConfig">
+                    <property name="users" ref="users:users"/>
+                    <property name="oldPortalId">nobleredirect</property>
+                    <property name="newPortalId">aes</property>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">DSC-284: Remove Become functionality from Customer Support role</property>
+            <property name="contactInfo">pavelchebykin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.alterego.server.security.util.AERevokePermissionMigration">
+                 <uses ref="ae-security-manager"/>
+                 <uses class="com.oilspace.apps.alterego.server.security.util.IRolePermission[]">
+                    <item>
+                        <property name="role" class="java.lang.String">role:customer-support</property>
+                        <property name="artifact" class="java.lang.String">resource:services.portal.components.become-member-tool</property>
+                        <property name="action" class="java.lang.String">action:services.portal.components.enable</property>
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OW-2144: reorganize table feeds_db3</property>
+            <property name="contactInfo">ebykov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item>
+                        /* delete duplicates */
+                        delete from feeds_db3
+                          where rowid in (select rowid
+                                            from (select rowid,
+                                                         row_number() over (partition by path order by time) as item_count
+                                                    from feeds_db3
+                                                 )
+                                            where item_count > 1
+                                         )
+                    </item>
+                    <item>
+                        /* delete all cboard.news rows */
+                        delete from feeds_db3 where path like 'cboard.news.%'
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OW-2144: drop FEEDS_DB3_TIME index</property>
+            <property name="contactInfo">ebykov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.ConditionalSQLAction">
+                <uses class="com.oilspace.apps.database.actions.ConditionalSQLActionConfig">
+                    <property name="condition">
+                        select count(*) from user_indexes where index_name = 'FEEDS_DB3_TIME'
+                    </property>
+                    <property name="action">
+                        /* remove index on field path to replace it with primary key */
+                        drop index feeds_db3_time
+                    </property>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OW-2144: drop FEEDS_DB3_PATH index</property>
+            <property name="contactInfo">ebykov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.ConditionalSQLAction">
+                <uses class="com.oilspace.apps.database.actions.ConditionalSQLActionConfig">
+                    <property name="condition">
+                        select count(*) from user_indexes where index_name = 'FEEDS_DB3_PATH'
+                    </property>
+                    <property name="action">
+                        /* remove index on field path to replace it with primary key */
+                        drop index feeds_db3_path
+                    </property>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OW-2144: create FEEDS_DB3_PK PK</property>
+            <property name="contactInfo">ebykov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.ConditionalSQLAction">
+                <uses class="com.oilspace.apps.database.actions.ConditionalSQLActionConfig">
+                    <property name="condition">
+                        select 1 - count(*) from user_constraints where table_name = 'FEEDS_DB3' and constraint_type = 'P'
+                    </property>
+                    <property name="action">
+                        /* add primary key on field path */
+                        alter table feeds_db3 add constraint feeds_db3_pk primary key (path)
+                    </property>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OW-2144: change blob storage method</property>
+            <property name="contactInfo">ebykov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.ChangeBlobStorageMethod">
+                <uses class="com.oilspace.apps.database.actions.ChangeBlobStorageMethodConfig">
+                    <property name="table">feeds_db3</property>
+                    <property name="oldRawColumn">item_xml</property>
+                    <property name="oldBlobColumn">item_xml_blob</property>
+                    <property name="newBlobColumn">item</property>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">DSC-329: remove redundant items from feeds_db3</property>
+            <property name="contactInfo">vmenshutkin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from feeds_db3 where path like 'news.aspect-private.%' or path like 'news.oil-training.%' or path like 'shipping.channels.%' or path like 'news.nexus.%' or path like 'news.shipping-training.%'
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">ASPECT-5515: enrich session_log table with foreign keys company_id and user_id </property>
+            <property name="contactInfo">vvishnevsky@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RestructureTableAction">
+                <uses class="com.oilspace.apps.database.actions.RestructureTableAction$RestructureTableConfig">
+                    <property name="targetDatabases">orcl</property>
+                    <property name="targetTable">session_log</property>
+                    <property name="action" class="com.oilspace.apps.database.actions.RunSchemaSQLSequence">
+                        <uses class="java.lang.String[]">
+                            <item>ALTER TABLE session_log add (user_id integer, company_id integer)</item>
+                            <item>UPDATE session_log sl SET
+                                (user_id, company_id) = (SELECT us.user_id, us.company FROM users us WHERE sl.username = us.username)</item>
+                            <item>ALTER TABLE session_log MODIFY (USER_ID INTEGER NOT NULL, COMPANY_ID INTEGER NOT NULL)</item>
+                            <item>ALTER TABLE session_log ADD
+                                (
+                                CONSTRAINT session_log_user_id_fk FOREIGN KEY(user_id) REFERENCES users(user_id),
+                                CONSTRAINT session_log_company_id_fk FOREIGN KEY(company_id) REFERENCES companies2(id)
+                                )
+                            </item>
+                        </uses>
+                    </property>
+                </uses>
+            </property>
+        </item>
+    </define>
+    <define name="market-migrations"
+            class="com.oilspace.apps.database.migration.Migration[]">
+        <define-default ref="market-database"/>
+
+        <item>
+            <property name="name">OILwatch-1188 (platts dispatch)</property>
+            <property name="contactInfo">aminin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">alter table platts_prices_import modify code varchar2(8)</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OILwatch-1188 (platts dispatched mean table)</property>
+            <property name="contactInfo">aminin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">alter table platts_prices_mean modify code varchar2(8)</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct some symbols descriptions (OILwatch-0843)</property>
+            <property name="contactInfo">kpiroumian@oilspace.com,vkryukov@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where description like 'NYMEX Accesss %'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OILwatch-1040</property>
+            <property name="contactInfo">astepanov@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('FFRE', 'NFRE') and description like '%Urals%'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OILwatch-1043-1</property>
+            <property name="contactInfo">astepanov@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('FFPL', 'FFPA', 'NFPL', 'NFPA') and market like 'COMEX%'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Revert-OILwatch-1062-2</property>
+            <property name="contactInfo">MarlenAntonyan@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('FFGC', 'FFSI', 'FFHG', 'FFAL') and market like 'COMEX%'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Revert-OILwatch-1062-3</property>
+            <property name="contactInfo">MarlenAntonyan@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">update history set code = 'J' || substr(code, 2) where substr(code, 1, 4) in ('FFGC', 'FFSI', 'FFHG', 'FFAL')</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Revert-OILwatch-1062-4</property>
+            <property name="contactInfo">MarlenAntonyan@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">update intraday set code = 'J' || substr(code, 2) where substr(code, 1, 4) in ('FFGC', 'FFSI', 'FFHG', 'FFAL')</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OILwatch-1116-2</property>
+            <property name="contactInfo">SergeyZyrin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">update symbols set quotes = 'abcdehlnoswy' where market = 'LME'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct symbols descriptions (OW-940)</property>
+            <property name="contactInfo">SergeyZyrin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('FFLH', 'FFLR', 'FFLU')</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct the DMFOQ description</property>
+            <property name="contactInfo">MarlenAntonyan@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code = 'DMFOQ'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct available quotes for LME symbols (OW-948)</property>
+            <property name="contactInfo">SergeyZyrin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code like 'LRO%' and market = 'LME'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OW-1179</property>
+            <property name="contactInfo">IlyaChuckanov@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.symbol.SymbolMigration">
+                <uses ref="market-database"/>
+                <uses ref="markets"/>
+            </property>
+        </item>
+        <item>
+            <property name="name">Symbols re-creation after OILwatch-0988</property>
+            <property name="contactInfo">MarlenAntonyan@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols
+                         where code in (
+                            'IFFB', 'IFEB', 'IFFP', 'IFEP', 'IFET', 'INDN', 'INMN', 'INQN', 'INSN', 'IFEO', 'IFEN',
+                            'ICEBINDEX', 'ICEBMORN5MIN', 'ICEBMORN1MIN', 'ICEBASIAN5MIN', 'ICEBASIAN1MIN',
+                            'ICEBAFT5MIN', 'ICEBAFT1MIN', 'ICEBEVE5MIN', 'ICEBEVE1MIN',
+                            'ICEGMORN1MIN', 'ICEGMORN5MIN', 'ICEGEVE1MIN', 'ICEGEVE5MIN', 'ICEGNIGHT1MIN', 'ICEGNIGHT5MIN',
+                            'C1IPEBRENT1M', 'C1IPEBRENT2M', 'C1SGNYMEXACCESSWTI1M', 'C1SGNYMEXACCESSWTI2M',
+                            'JFGC', 'JFSI', 'JFHG', 'JFAL', 'FFRE', 'FFRET', 'FFLR', 'FFLU', 'FFLH',
+                            'IFHO', 'IFCL', 'IFHU', 'IFRB', 'IFSC', 'IFNG', 'IFPN', 'FFPL', 'FFPA',
+                            'FLSPFF#CL', 'FLSPFF#HO', 'FLSPFF#NG', 'FLSPFF#PN', 'FLSPFF#PL', 'FLSPFF#PA', 'FLSPFF#RB', 'FLISFF#RBHO',
+                            'NEFSC', 'NEFGR'
+                        )
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct available quotes for DME, GLOBEX and COMEX-ACCESS symbols (OW-1061)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market = 'COMEX-ACCESS' or market = 'GLOBEX' or market = 'DME'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct symbols descriptions (OW-1034)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols where code in ('FLKRFF#HOCL', 'FLKRFF#RBCL')
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct Forex RUB symbols descriptions (OW-1063)</property>
+            <property name="contactInfo">szyrin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code like 'FRUB%'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct Forex AUD/USD symbol (OW-933)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code = 'FAUDUS'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">LME all symbols re-creation (25.05.2008)</property>
+            <property name="contactInfo">MikePechyonkin@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>delete from symbols where market = 'LME'</item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Trafi-0932 symbols description fix</property>
+            <property name="contactInfo">valexeev@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code='UFZL'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OILwatch-1344: correct available quotes for LME Select symbols</property>
+            <property name="contactInfo">szyrin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code like 'LE%' and category='LM' and market='LME'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">LME FX rate symbols re-creation (OILwatch-1335)</property>
+            <property name="contactInfo">MikePechyonkin@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols
+                        where code in ('LSXEURUSDSP', 'LSXEURUSDMM',
+                                'LSXEURUSDMA', 'LSXGBPUSDSP', 'LSXGBPUSDMM',
+                                'LSXGBPUSDMA', 'LSXJPYUSDSP', 'LSXJPYUSDMM',
+                                'LSXJPYUSDMA')
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">ICE Futures Europe - Renaming of ECX CFI to ECX EUA</property>
+            <property name="contactInfo">MikePechyonkin@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>delete from symbols where code = 'IFECF'</item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">LME FX rate symbols second re-creation (OILwatch-1335)</property>
+            <property name="contactInfo">MikePechyonkin@oilspace.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols
+                        where code in ('LSXEURUSDSP', 'LSXEURUSDMM',
+                                'LSXEURUSDMA', 'LSXGBPUSDSP', 'LSXGBPUSDMM',
+                                'LSXGBPUSDMA', 'LSXJPYUSDSP', 'LSXJPYUSDMM',
+                                'LSXJPYUSDMA')
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Change quote c to s for LME Warehouse symbols (OILwatch-1361)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    update history h set bytecode = 's' where code like 'LSW%' and bytecode = 'c'
+                        and h.code in (select s.code from symbols s where market = 'LME')
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct available quotes for LME symbols (OILwatch-1361)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market = 'LME'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct some LME descriptions (OILwatch-1368)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market = 'LME'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct available quotes for ICE, NYMEX symbols (OILwatch-1393)</property>
+            <property name="contactInfo">DanilVodianik@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market in
+                                                        ('IPE', 'NYMEX', 'NYMEX-SOFTS',
+                                                        'ACCESS', 'NYMEX EUROPE',
+                                                        'NYMEX EUROPE ACCESS', 'COMEX',
+                                                        'DME', 'COMEX-ACCESS')</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct plastic Official and Unofficial contract descriptions (OW-1229)</property>
+            <property name="contactInfo">MikePechyonkin@oilspace.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols
+                    where code in ('LROLLDWX', 'LROLLDWZ', 'LROLLDWF',
+                                   'LRULLDWX', 'LRULLDWZ', 'LRULLDWF',
+                                   'LROPPDWX', 'LROPPDWZ', 'LROPPDWF',
+                                   'LRUPPDWX', 'LRUPPDWZ', 'LRUPPDWF')
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct symbol code for Foxer Ghana Cedi</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('FGHCHS', 'FGHCVS', 'FGHCSS', 'FGHCUS') and market = 'FOREX'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct available quotes for CBOT symbols</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market = 'CBOT'</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Forex duplicated symbols</property>
+            <property name="contactInfo">AlexeyStepanov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('FSGBPMZM','FSJPYUGX',
+                    'FFEURMYR_06M','FFRUBBRL_03W','FFEURJPY_TN','FFUSDMYR_02M','FSEURUGX','FSCHFGTQ','FFUSDMYR_02W',
+                    'FFRUBBRL_03M','FFCHFMYR_02W','FSUSDIQD','FFGBPUSD_SN','FSEURGHS','FSUSDCHF','FFCHFMYR_02M','FSGBPPLN',
+                    'FSCHFJPY','FSUSDIRR','FFUSDMYR_03M','FFRUBBRL_02W','FSUSDDKK','FFUSDCHF_SN','FFCHFMYR_03W','FSCHFILS',
+                    'FFRUBBRL_02M','FSRUBBRL','FFUSDMYR_03W','FSEURPLN','FSJPYZAR','FFEURRON_06M','FSUSDUGX','FFCHFMYR_03M',
+                    'FSGBPINR','FSUSDRUB','FSGBPMXN','FFEURGBP_10M','FFUSDCHF_ON','FFRUBBRL_01Y','FFRUBBRL_01W',
+                    'FFRUBBRL_01M','FSCHFPLN','FFJPYCHF_11M','FSCHFBRL','FSGBPMYR','FFEURGBP_01M','FSJPYSEK','FFEURJPY_SN',
+                    'FFEURGBP_01Y','FFEURGBP_11M','FFEURGBP_01W','FFEURRON_03W','FSGBPCZK','FSUSDGTQ','FSGBPILS',
+                    'FFEURGBP_02M','FFEURGBP_ON','FSCHFAMD','FFGBPUSD_TN','FFJPYCHF_10M','FFGBPCHF_11M','FFEURINR_02M',
+                    'FFCHFBRL_06M','FFCHFMYR_06M','FSEURRON','FSEURILS','FFGBPCHF_01M','FFEURINR_01Y','FFGBPBRL_01W',
+                    'FFEURINR_01W','FSGBPBRL','FFGBPBRL_01M','FSJPYNOK','FFGBPCHF_10M','FFUSDJPY_ON','FSEURGBP',
+                    'FFEURINR_01M','FSCHFDKK','FSUSDAMD','FSGBPRON','FFRUBBRL_06M','FSNZDJPY','FSUSDNGN','FSEURINR',
+                    'FSEURSEK','FSJPYKES','FSCHFNOK','FFCHFBRL_03M','FFUSDMYR_01M','FSCHFRON','FFCHFRON_01M','FFEURJPY_ON',
+                    'FFJPYINR_06M','FSGBPJPY','FFUSDMYR_01Y','FFCHFBRL_03W','FFUSDMYR_01W','FSEURKES','FSCHFINR',
+                    'FFEURAUD_02M','FSGBPKES','FFEURGBP_TN','FFGBPMYR_01M','FSAUDJPY','FFEURGBP_07M','FPPLDUSDOZ_SP',
+                    'FFCHFBRL_02W','FFGBPJPY_01Y','FFJPYCHF_07M','FFGBPJPY_01M','FFJPYINR_03W','FFCHFBRL_02M',
+                    'FFEURAUD_01Y','FFJPYINR_03M','FSUSDMZM','FFEURZAR_03M','FSEURTRY','FFEURAUD_01M','FFGBPMYR_02M',
+                    'FFEURGBP_08M','FSCHFRUB','FFUSDRON_03W','FSJPYILS','FFCHFBRL_01W','FFCHFBRL_01Y','FFJPYCHF_06M',
+                    'FFGBPRON_01M','FFGBPJPY_02M','FFCHFBRL_01M','FFGBPRON_01Y','FSEURJPY','FFGBPMYR_01Y','FFGBPRON_01W',
+                    'FSUSDMYR','FFGBPMYR_01W','FSUSDZAR','FSGBPNAD','FFGBPMYR_03M','FSEURBRL','FFJPYCHF_05M','FFGBPRON_02M',
+                    'FSUSDAED','FFJPYINR_01W','FFJPYINR_01Y','FFUSDRON_02W','FFEURGBP_09M','FSUSDCNY','FFGBPRON_02W',
+                    'FSCHFIQD','FFAUDUSD_10M','FPPLTUSDOZ_SP','FFUSDRON_03M','FFEURZAR_01M','FFJPYINR_01M','FFGBPMYR_02W',
+                    'FSCHFUGX','FSGBPZAR','FSGBPSEK','FFJPYCHF_04M','FFGBPRON_03M','FFEURAUD_03M','FSEURCZK','FFUSDRON_01Y',
+                    'FSCHFIRR','FFEURZAR_01Y','FFJPYINR_02W','FFUSDRON_01W','FFAUDUSD_ON','FFGBPRON_03W','FFEURZAR_02M',
+                    'FFJPYINR_02M','FFUSDRON_02M','FFGBPMYR_03W','FFJPYCHF_03W','FFEURGBP_03M','FFUSDINR_02M','FSAUDBRL',
+                    'FFEURAUD_06M','FSCHFGHS','FFAUDBRL_02W','FSCADZAR','FFJPYCHF_03M','FFUSDINR_02W','FSGBPNGN',
+                    'FFEURGBP_02W','FFAUDBRL_03M','FFAUDUSD_TN','FFJPYCHF_02W','FFUSDINR_01Y','FSEURAUD','FFUSDRON_01M',
+                    'FFUSDCHF_10M','FSEURZAR','FFUSDINR_01M','FFEURCHF_SN','FFEURGBP_04M','FFAUDBRL_03W','FSEURUSD',
+                    'FFJPYCHF_02M','FFUSDINR_01W','FFGBPMYR_06M','FFEURGBP_03W','FFGBPJPY_06M','FFJPYCHF_01W',
+                    'FFJPYCHF_01Y','FSINRMYR','FSCHFEGP','FSJPYNGN','FSJPYBRL','FSJPYTRY','FFEURGBP_05M','FSUSDBRL',
+                    'FFEURCHF_TN','FSGBPGHS','FFJPYCHF_01M','FFGBPRON_06M','FFUSDCHF_TN','FFGBPJPY_03M','FFUSDINR_03M',
+                    'FFEURGBP_06M','FFEURGBP_SN','FFUSDINR_03W','FSUSDNAD','FFEURZAR_06M','FFAUDUSD_SN','FFAUDBRL_06M',
+                    'FSCHFNGN','FFGBPZAR_06M','FFAUDUSD_03M','FFEURJPY_03M','FSJPYCNY','FSEURMXN','FFGBPUSD_01W',
+                    'FFAUDUSD_03W','FFGBPUSD_01Y','FSMYRINR','FFUSDCHF_03W','FSEURRUB','FSCHFZAR','FFUSDCHF_03M',
+                    'FFUSDRON_06M','FPSLVUSDOZ_SP','FSGBPCHF','FFGBPUSD_02M','FSGBPEGP','FFEURAUD_09M','FFEURJPY_02W',
+                    'FFAUDUSD_04M','FFEURJPY_04M','FFUSDJPY_09M','FFJPYMYR_06M','FFUSDSGD_01M','FSEURCNY','FSEURAED',
+                    'FFUSDCHF_04M','FFGBPUSD_01M','FFEURJPY_03W','FFAUDUSD_05M','FFUSDSGD_02M','FFJPYMYR_03M',
+                    'FFGBPINR_01M','FFAUDBRL_02M','FSEURMZM','FFUSDCHF_11M','FFEURJPY_05M','FFGBPINR_01W','FFUSDCAD_ON',
+                    'FSJPYEGP','FSJPYIRR','FFUSDSGD_01Y','FSGBPAED','FFUSDSGD_01W','FFJPYMYR_02W','FFGBPINR_01Y',
+                    'FSGBPUGX','FFAUDUSD_06M','FFAUDBRL_01Y','FFUSDCAD_10M','FFUSDCHF_05M','FFCHFINR_06M','FFAUDBRL_01W',
+                    'FFUSDCAD_01Y','FFUSDSGD_03M','FFGBPINR_02M','FSJPYRUB','FFUSDPLN_06M','FFAUDBRL_01M','FFEURJPY_06M',
+                    'FSCHFNAD','FFGBPINR_02W','FFUSDCAD_01W','FSUSDTRY','FFEURCZK_06M','FFJPYMYR_03W','FSGBPDKK',
+                    'FFUSDCAD_01M','FFAUDUSD_07M','FFUSDCAD_11M','FFUSDCHF_06M','FSAUDUSD','FSEURMYR','FFUSDZAR_TN',
+                    'FSJPYNAD','FFEURCHF_10M','FFCHFINR_03W','FFGBPINR_03W','FSJPYIQD','FFUSDPLN_03M','FFEURJPY_07M',
+                    'FFGBPINR_03M','FFUSDJPY_06M','FFUSDSGD_10M','FFGBPUSD_06M','FFEURBRL_03W','FFEURCHF_04M','FSCHFMZM',
+                    'FFEURBRL_03M','FFEURCZK_01M','FFJPYCHF_08M','FSUSDMXN','FFUSDCAD_TN','FFEURJPY_08M','FSGBPGTQ',
+                    'FSEURGTQ','FFEURUSD_ON','FFCHFINR_02W','FSCHFMYR','FFEURCHF_03W','FFUSDJPY_05M','FFJPYMYR_02M',
+                    'FFGBPUSD_05M','FFJPYMYR_01M','FSGBPNOK','FFCHFINR_03M','FFEURCHF_03M','FSSGDMYR','FFJPYCHF_09M',
+                    'FSCHFCZK','FFJPYMYR_01W','FFJPYMYR_01Y','FFUSDCHF_01W','FFAUDUSD_01Y','FFCHFINR_01W','FFUSDPLN_01M',
+                    'FSUSDCZK','FFAUDUSD_01W','FFEURJPY_09M','FFAUDUSD_11M','FFUSDCHF_01Y','FFUSDCAD_SN','FFCHFINR_01Y',
+                    'FSJPYAMD','FFEURBRL_01W','FFEURBRL_01Y','FFGBPUSD_03W','FFUSDJPY_08M','FFEURUSD_10M','FFAUDUSD_01M',
+                    'FFEURCHF_02W','FFEURCHF_02M','FFUSDZAR_02M','FFGBPUSD_04M','FFUSDZAR_02Y','FFUSDCHF_01M',
+                    'FFCHFINR_02M','FFUSDZAR_02W','FSJPYINR','FFEURCZK_03M','FFEURBRL_01M','FFAUDUSD_02W','FFEURUSD_01M',
+                    'FFUSDCHF_02W','FFUSDPLN_02M','FFEURCHF_01Y','FFEURCHF_11M','FFUSDZAR_SN','FFGBPUSD_02W','FFEURCZK_01Y',
+                    'FFUSDJPY_07M','FFEURBRL_02W','FFEURUSD_01W','FFEURCHF_01W','FFGBPINR_06M','FFEURUSD_01Y',
+                    'FFEURUSD_11M','FFAUDUSD_02M','FFGBPUSD_03M','FFUSDCHF_02M','FFUSDZAR_01M','FFEURCHF_01M',
+                    'FFCHFINR_01M','FFUSDZAR_01W','FFUSDZAR_01Y','FFEURBRL_02M','FFEURCZK_02M','FFUSDPLN_01Y',
+                    'FFUSDINR_06M','FFUSDZAR_04Y','FFEURCHF_08M','FFUSDCAD_06M','FFJPYBRL_01W','FFUSDJPY_01W',
+                    'FFJPYBRL_01Y','FFUSDJPY_SN','FFUSDJPY_01Y','FFUSDBRL_06M','FFGBPCHF_03W','FSGBPIQD','FSJPYDKK',
+                    'FFJPYBRL_02M','FSUSDILS','FFEURUSD_02W','FFUSDJPY_02M','FFJPYBRL_02W','FFEURUSD_02M','FFGBPCHF_04M',
+                    'FFUSDZAR_03W','FFEURUSD_03M','FFEURCHF_07M','FSEURNAD','FFUSDZAR_03Y','FFGBPUSD_09M','FFUSDCAD_07M',
+                    'FFUSDZAR_03M','FSEURAMD','FSGBPUSD','FSGBPRUB','FFUSDSGD_09M','FFEURRON_01M','FFJPYBRL_03M',
+                    'FFEURUSD_SN','FSSGDINR','FFEURUSD_03W','FFJPYBRL_03W','FFUSDJPY_01M','FSCHFCNY','FFGBPCHF_05M',
+                    'FFGBPUSD_08M','FFGBPBRL_02M','FSUSDEGP','FFCADBRL_06M','FFEURRON_01Y','FFEURCHF_06M','FFEURUSD_04M',
+                    'FFUSDJPY_03W','FSCHFMXN','FSEURIQD','FSJPYMZM','FFGBPCHF_01Y','FSGBPAMD','FFGBPCHF_01W','FFEURRON_01W',
+                    'FFUSDCAD_08M','FFGBPBRL_02W','FFUSDZAR_06M','FFGBPCHF_TN','FSJPYMYR','FFEURRON_02M','FFGBPBRL_01Y',
+                    'FFUSDBRL_03M','FFUSDJPY_04M','FFEURUSD_TN','FFGBPCHF_02M','FFUSDBRL_03W','FSEURDKK','FSGBPIRR',
+                    'FSJPYCHF','FFGBPBRL_03M','FFEURBRL_06M','FFUSDZAR_05Y','FFUSDJPY_02W','FSCHFSEK','FSSGDJPY',
+                    'FFEURUSD_05M','FFEURCHF_05M','FSUSDPLN','FFGBPBRL_03W','FFEURRON_02W','FSEURNOK','FFGBPUSD_07M',
+                    'FFGBPCHF_02W','FFCHFRON_06M','FFUSDCAD_09M','FFEURRON_03M','FFUSDZAR_ON','FFJPYBRL_01M','FSEURIRR',
+                    'FFGBPCHF_03M','FFUSDJPY_03M','FSJPYMXN','FSAUDZAR','FFGBPUSD_11M','FFCHFMYR_01W','FFEURINR_03M',
+                    'FSUSDSEK','FSAEDJPY','FFCHFMYR_01Y','FFAUDUSD_08M','FFGBPZAR_01M','FSUSDNOK','FPGLDUSDOZ_SP',
+                    'FFUSDCHF_07M','FFEURMYR_01M','FFEURUSD_06M','FFUSDCAD_02M','FFGBPZAR_01Y','FSUSDGHS','FFEURMYR_01Y',
+                    'FFEURMYR_01W','FSUSDCAD','FFCHFMYR_01M','FFCADBRL_03M','FFUSDBRL_01Y','FFGBPCHF_08M','FFUSDBRL_01W',
+                    'FFUSDCAD_02W','FFEURINR_02W','FFCADBRL_03W','FSCHFAED','FFJPYBRL_06M','FFUSDBRL_01M','FSUSDJPY',
+                    'FFGBPUSD_10M','FFAUDUSD_09M','FFGBPUSD_ON','FSGBPTRY','FFGBPZAR_02M','FFUSDCHF_08M','FFEURUSD_07M',
+                    'FFUSDCAD_03M','FFUSDBRL_02W','FFGBPCHF_09M','FFUSDCAD_03W','FFEURINR_03W','FFUSDJPY_11M','FFUSDBRL_02M',
+                    'FFCHFRON_03W','FFGBPZAR_03M','FFUSDCHF_09M','FFCHFRON_03M','FFEURJPY_10M','FFEURUSD_08M','FFUSDCAD_04M',
+                    'FFEURMYR_03W','FSEUREGP','FSCADBRL','FSCHFKES','FFGBPCHF_06M','FFEURJPY_11M','FFGBPBRL_06M','FSEURNGN',
+                    'FFCADBRL_01M','FFCADBRL_01W','FFEURJPY_01M','FFCADBRL_01Y','FFCHFRON_02W','FSUSDINR','FSUSDRON',
+                    'FFEURMYR_03M','FFUSDJPY_10M','FSJPYGTQ','FFUSDSGD_06M','FFEURMYR_02M','FSEURCHF','FFEURINR_06M',
+                    'FFCHFRON_02M','FSUSDKES','FFUSDJPY_TN','FFEURUSD_09M','FFUSDCAD_05M','FFEURMYR_02W','FFEURJPY_01W',
+                    'FFEURCHF_09M','FFEURJPY_01Y','FSUSDSGD','FFJPYCHF_TN','FFCADBRL_02M','FFGBPCHF_07M','FFCHFRON_01Y',
+                    'FFEURJPY_02M','FSGBPCNY','FFCHFRON_01W','FFCADBRL_02W','FFUSDZAR_09M','FFUSDMYR_06M')</uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct granularity for CBOT symbols (OW-1376)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols where market = 'CBOT'
+                    </item>
+                    <item>
+                        update history h set h.value = (TRUNC(h.value * 10000) / 100)
+                        where h.code like 'UFZS%' and h.bytecode not in ('e','v','w','t')
+                    </item>
+                    <item>
+                        update history h set h.value = (TRUNC(h.value * 10000) / 100)
+                        where h.code like 'ULSPFF#ZS%' and h.bytecode not in ('e','v','w','t')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct symbols descriptions (OW-1441)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols where substr(code, 1, 5) in (
+                            'LCOLL', 'LEOLL', 'LROLL',
+                            'LCOLE', 'LEOLE', 'LROLE',
+                            'LCOLA', 'LEOLA', 'LROLA',
+                            'LCOLN', 'LEOLN', 'LROLN',
+                            'LCOPP', 'LEOPP', 'LROPP',
+                            'LCOPE', 'LEOPE', 'LROPE',
+                            'LCOPA', 'LEOPA', 'LROPA',
+                            'LCOPN', 'LEOPN', 'LROPN',
+                            'LCULL', 'LEULL', 'LRULL',
+                            'LCULE', 'LEULE', 'LRULE',
+                            'LCULA', 'LEULA', 'LRULA',
+                            'LCULN', 'LEULN', 'LRULN',
+                            'LCUPP', 'LEUPP', 'LRUPP',
+                            'LCUPE', 'LEUPE', 'LRUPE',
+                            'LCUPA', 'LEUPA', 'LRUPA',
+                            'LCUPN', 'LEUPN', 'LRUPN'
+                        )
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct symbol codes for Bunker Holdings market</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market = 'BUNKERHOLDINGS'</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct LME Steel symbols descriptions (OWCR-33)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols where substr(code, 4, 2) = 'FM' and market = 'LME'
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct granularity for BFUP</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code = 'BFUP'</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OILwatch-1587: Convert FOREX symbol codes from 1Y to 12M.</property>
+            <property name="contactInfo">akozlov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols 
+                        where market = 'FOREX'
+                            and (code like 'FF%\_12M' escape '\'
+                                 or code like 'FF%\_01Y' escape '\')
+                    </item>
+                    <item>
+                        update history h1
+                        set h1.code = replace(h1.code, '_01Y', '_12M')
+                        where h1.code like 'FF%\_01Y' escape '\'
+                             and not exists(select 1 from history h2
+                                            where h2.code = replace(h1.code, '_01Y', '_12M')
+                                                and h2.valuedate = h1.valuedate
+                                                and h2.bytecode = h1.bytecode)
+                    </item>
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct available quotes for LME symbols (OWCR-64)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where substr(code, 1, 3) in (
+                        'LMF', 'LMS', 'LME',
+                        'LRF', 'LRS', 'LRE'
+                    )
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">OILwatch-1588. Removing broken symbols.</property>
+            <property name="contactInfo">akozlov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where market='FOREX'
+                </uses>
+            </property>
+        </item>
+        <item>
+            <property name="name">Correct granularity for Platts symbols(OWCR-67), with fixed OW-1579 (1)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com,kpiroumian@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        merge into symbols s
+                        using
+                        (
+                          select
+                            h.code code,
+                            1 / power(10, 
+                                         max(
+                                             length(
+                                                 round(
+                                                     decode(
+                                                         abs(h.value - trunc(h.value))
+                                                         , 0
+                                                         , 1
+                                                         , abs(h.value - trunc(h.value))
+                                                     )
+                                                     ,10
+                                                 )
+                                             ) - 1
+                                         )
+                                      ) gran
+                          from
+                            history h
+                          where
+                            h.code in (select s.code from symbols s where market in ('PLATTS', 'PLATTSDISPATCH'))
+                            and h.bytecode in ('m', 's', 'c', 'u', 'a', 'b', 'h', 'l')
+                          group by h.code
+                        ) g
+                        on (s.code = g.code)
+                        when matched then update set s.granularity = g.gran
+                    </item>
+                    <item>
+                        update symbols set granularity = 0.01 where
+                        code like 'XILL%'
+                        or code like 'XILO%'
+                        or code like 'XNCL%'
+                    </item>
+                    <item>
+                        update symbols set granularity = 0.0001 where
+                        code like 'XNHO%'
+                        or code like 'XNHU%'
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-1607. Some FX Codes do not work like FPLT please remove them from the registery.</property>
+            <property name="contactInfo">akozlov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where market='FOREX'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OILwatch-1610</property>
+            <property name="contactInfo">mantonyan@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where market in ('IPE', 'NYMEX', 'NYMEX-SOFTS', 'COMEX', 'COMEX-ACCESS', 'ACCESS', 'CBOT', 'GLOBEX', 'DME')</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct granularity for CBOT Wheat (OW-1455)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where market = 'CBOT'
+                    and code in ('UFZW','ULSPFF#ZW')
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct granularity for ICE Gas Oil Crack (OW-1639)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where code = 'ILKRFF#EP'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct historical CBOT values for several instruments (OW-1455)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        update history
+                        set value = floor(value) + (value - floor(value)) * 0.8
+                        where
+                        (code like 'UFZS%' or code like 'UFZO%'
+                        or code like 'UFZC%' or code like 'UFZW%')
+                        and bytecode in ('a', 'b', 'c', 'h', 'l', 's', 'o')
+                    </item>
+                    <item>
+                        update history
+                        set value = floor(value) + (value - floor(value)) * 0.8
+                        where
+                        (code like 'ULSPFF#ZS%' or code like 'ULSPFF#ZO%'
+                        or code like 'ULSPFF#ZC%' or code like 'ULSPFF#ZW%')
+                        and bytecode in ('a', 'b', 'c', 'h', 'l', 's', 'o')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Correct granularity for several CBOT instruments (OW-1455)</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where code in ('UFZS', 'UFZC', 'UFZO')
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">Add j and k to GLOBEX available quotes</property>
+            <property name="contactInfo">MarlenAntonyan@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where market='GLOBEX'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-1709: ORA-12899 errors in filestage</property>
+            <property name="contactInfo">MarlenAntonyan@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    alter table symbols modify (category varchar2(3))
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-49: Marine Bunker Exchange - Futures Based Prices and News</property>
+            <property name="contactInfo">akozlov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        update symbols set quotes = 's'
+                        where market = 'MARINEBUNKER' and quotes = 'c'
+                    </item>
+                    <item>
+                        update history set bytecode = 's'
+                        where bytecode = 'c'
+                            and code in (select code from symbols where market = 'MARINEBUNKER')
+                    </item>
+                    <item>
+                        update branches set path = concat('Spot Prices|',path) where market = 'MARINEBUNKER'
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-1630: Incorrect COMEX currency</property>
+            <property name="contactInfo">SergeyZyrin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">
+                    delete from symbols where code in ('EFSI', 'JFSI')
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-1801: Marine Bunker: improvements to the price display</property>
+            <property name="contactInfo">pchebykin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        update symbols set quotes = 'c'
+                        where market = 'MARINEBUNKER' and quotes = 's'
+                    </item>
+                    <item>
+                        update history set bytecode = 'c'
+                        where bytecode = 's' and code like 'MB%'
+                            and code in (select code from symbols where market = 'MARINEBUNKER')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-1818: Last "Last Prices" in Marine Bunkers Spot historical dated March 16</property>
+            <property name="contactInfo">pchebykin@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                            update symbols set quotes = 'c' where market = 'MARINEBUNKER' 
+                            and quotes = 's' and code like 'MB%'
+                    </item>
+                    <item>
+                            delete from history h where h.bytecode = 's' and 
+                                h.code like 'MB%' and h.valuedate > to_date('16-03-2012', 'dd-mm-yyyy')
+                                and code in (select h1.code from history h1 where 
+                                    h1.code = h.code and h1.valuedate = h.valuedate and h1.bytecode = 'c')
+                    </item>
+                    <item>
+                            update history set bytecode = 'c' where bytecode = 's' and 
+                                code like 'MB%' and valuedate > to_date('16-03-2012', 'dd-mm-yyyy')  and
+                                code in (select code from symbols where market = 'MARINEBUNKER')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-139: Platts Oil Arbitrage and Refiner reports</property>
+            <property name="contactInfo">akopylov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="default-database"/>
+                <uses class="java.lang.String">
+                    update AE_ROLES set Description = 'PWF Oil Arbitrage Wire' where DESCRIPTION = 'PWF FeedStock Wire'
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-1995: Argus meta-data processing fails</property>
+            <property name="contactInfo">akozlov@aspectenterprise.com</property>
+            <property name="action"
+                     class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">alter table ARGUS_CODE_CATEGORIES modify CATEGORY varchar2(30)</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">DSC-155-1</property>
+            <property name="contactInfo">dyaitskov@aspectenterprise.com</property>
+            <property name="action"
+                      class="com.oilspace.apps.database.actions.RunSQL">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String">delete from symbols where code in ('NFNGT', 'NFPNT', 'NFRBT', 'NFHUT', 'NFCLT', 'NFLRT', 'NFLUT', 'NFLHT', 'FFKTT', 'FFTTT', 'FFYOT', 'FFWST', 'FFBHT', 'FFRTT', 'FFHPT', 'FFHHT', 'FFRET', 'FFCJT', 'NFHOT')</uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-2068: CME Market Data rename</property>
+            <property name="contactInfo">mantonyan@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>delete from SYMBOLS
+                           where
+                            code = 'FFBH'
+                            or code = 'FFBHT'
+                            or code = 'FLC1FF#HOCL'
+                            or code = 'FLISFF#LUHO'
+                            or code = 'FLISFF#RBHO'
+                            or code = 'FLKRFF#HOCL'
+                            or code = 'FLSPFF#HO'
+                            or code = 'FLSPFF#QH'
+                            or code = 'IFHO'
+                            or code = 'NFHO'
+                            or code = 'NFHO2'
+                            or code = 'NFHO3'
+                            or code = 'NFHO4'
+                            or code = 'NFHOS'
+                            or code = 'NFHOT'
+                            or code = 'NLISFF#RBHO'
+                            or code = 'NLKRFF#CLHO'
+                            or code = 'NLSPFF#HO'
+                            or code = 'NF23'
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-2193: Nymex and ICE RB and HO incorrect currency</property>
+            <property name="contactInfo">aabramkin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        update SYMBOLS
+                        set CURRENCY = 'USD'
+                        where
+                        CODE in (
+                            'NFHO', 'NFHO2', 'NFHO3', 'NFHO4', 'NFHOS', 'NFHOT',
+                            'NFRB', 'NFRBS', 'NFRBT',
+                            'IFEO', 'IFEN')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-2343: Broken BW symbol appears in Symbol Catalog and not showing there</property>
+            <property name="contactInfo">akozlov@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        update HISTORY
+                        set CODE = 'BW01S'
+                        where
+                        CODE = 'BW0.1%S'
+                    </item>
+                    <item>
+                        delete from SYMBOLS
+                        where CODE = 'BW0.1%S'
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <item>
+            <property name="name">OW-2435: Morningstar: some CBOT futures shows incorrect values</property>
+            <property name="contactInfo">vmenshutkin@aspectenterprise.com</property>
+            <property name="action" class="com.oilspace.apps.database.actions.RunSQLSequence">
+                <uses ref="market-database"/>
+                <uses class="java.lang.String[]">
+                    <item>
+                        delete from symbols where code in ('UFZS', 'UFZC', 'UFZO', 'UFZW', 'UFKE', 'UFWMK', 'ULSPFF#ZW', 'ULSPFF#ZC', 'ULSPFF#ZO')
+                    </item>
+                </uses>
+            </property>
+        </item>
+
+        <include-hook name="gf:generic-futures-migrations"/>
+        <include-hook name="refinery:refinery-migrations"/>
+        <include-hook name="src-appserver-migrations"/>
+
+    </define>
+
+    <!-- required components for the portal -->
+    <define name="portal-required">
+        <!-- the servlet container -->
+        <item ref="servlet:http-server">
+            <define name="servlet:http-port"><old-config name="PORTAL_HTTP_PORT"/></define>
+            <define name="servlet:mappings">
+                <include ref="src-servlet-mappings"/>
+
+                <when on="development">
+                    <include ref="servlet:without-security">
+                        <define name="for" ref="src-private-servlet-mappings"/>
+                    </include>
+                </when>
+                
+                <include-hook name="oilwatch-servlet-mappings"/>
+                <include-hook name="aspect-servlet-mappings"/>
+                <include-hook name="risk-servlet-mappings"/> 
+                <include-hook name="pfshooks:servlet-mappings"/>
+                <include-hook name="site-servlet-mappings"/>
+                <include-hook name="calendar-servlet-mappings"/>
+            </define>
+        </item>
+
+        <when defined="PORTAL_HTTP_PRIVATE_PORT">
+            <item ref="servlet:local-http-server">
+                <define name="servlet:http-port"><old-config name="PORTAL_HTTP_PRIVATE_PORT"/></define>
+                <define name="servlet:mappings" ref="servlet:without-security">
+                    <define name="for" ref="src-private-servlet-mappings"/>
+                </define>
+            </item>
+        </when>
+
+        <item ref="users:server"/>
+
+        <!-- session server -->
+        <item ref="session-server"/>
+
+        <!-- stylesheet server -->
+        <item ref="stylesheet-server"/>
+
+        <!-- AE server -->
+        <item ref="ae-server-required"/>
+
+        <item ref="price-manager-server"/>
+
+        <!-- authentication server -->
+        <item>
+            <port class="com.oilspace.apps.authentication.common.IRPCAuthHandler"
+                  ref="rpc:named-port-def">
+                <define name="port"><port ref="rpc:one-of-n-sync-port-def">
+                    <define name="address">portal/authentication/server</define>
+                </port></define>
+                <define name="names">
+                    <item>portal/authentication/server</item>
+                </define>
+            </port>
+            <bind class="com.oilspace.apps.authentication.server.AuthenticationManager"/>
+        </item>
+
+        <!-- contract expiration crud -->
+        <item>
+            <port class="com.oilspace.apps.marketstate.persistence.common.IExpirationManager"
+                  ref="rpc:named-port-def">
+                <define name="port"><port ref="rpc:one-of-n-sync-port-def">
+                    <define name="address">expiration-manager</define>
+                </port></define>
+                <define name="names">
+                    <item>marketstate/expiration</item>
+                </define>
+            </port>
+            <bind class="com.oilspace.apps.marketstate.expiration.server.ExpirationScheduleManager"/>
+        </item>
+        <item>
+            <port class="com.oilspace.apps.marketstate.expiration.common.IWipeDownManager"
+                  ref="rpc:named-port-def">
+                <define name="port"><port ref="rpc:one-of-n-sync-port-def">
+                    <define name="address">wipe-down-manager</define>
+                </port></define>
+                <define name="names">
+                    <item>marketstate/wipedowmmanager</item>
+                </define>
+            </port>
+            <bind class="com.oilspace.apps.marketstate.expiration.server.WipeDownManager"/>
+        </item>
+
+        <!-- portal message server -->
+        <when on="portal-messages">
+            <item ref="portal:message-server"/>
+        </when>
+
+        <include-hook name="aspect-portal-required"/>
+        <include-hook name="oilwatch-portal-required"/>
+        <include-hook name="odbc-portal-required"/>
+    </define>
+
+    <define name="lc-search-required">
+        <item>
+            <port class="com.oilspace.apps.search.server.ISearchServer"
+                  ref="rpc:named-port-def">
+                <define name="port"><port ref="rpc:one-of-n-sync-port-def">
+                    <define name="address">search/server</define>
+                    <define name="rpc:timeout" unit="seconds">90</define>
+                </port></define>
+                <define name="names">
+                    <item>search/server</item>
+                </define>
+            </port>
+            <bind class="com.oilspace.apps.search.server.SearchServer">
+                <uses class="com.oilspace.apps.search.common.SearchConfig"/>
+            </bind>
+        </item>
+
+        <include-hook name="oilwatch-lc-search-required"/>
+    </define>
+
+    <define name="lc-archive-required">
+        <item class="com.oilspace.apps.search.server.ArchiveServer">
+            <uses class="com.oilspace.apps.search.common.SearchConfig"/>
+        </item>
+
+        <!-- for non-src document providers -->
+        <include-hook name="oilwatch-lc-archive-required"/>
+    </define>
+
+    <!-- the default target when no target is specified to Controller.main.
+         In production, simply the portal.  In development, it is more
+         convenient to combine the processes. -->
+    <when on="production">
+        <define name="default-required">
+            <item ref="portal-required"/>
+            <include ref="default-required-hooks"/>
+        </define>
+    </when>
+    <when on="development">
+        <define name="default-required" sequential="true">
+            <item ref="post-release"/>
+            <item>
+                <item ref="portal-required"/>
+                <item ref="feeds:server-required"/>
+                <item ref="lc-search-required"/>
+                <item ref="lc-archive-required"/>
+                <item ref="symsearch:server"/>
+                <include ref="default-required-hooks"/>
+            </item>
+        </define>
+    </when>
+    <define name="default-required-hooks">
+        <include-hook name="oilwatch-default-required"/>
+        <include-hook name="risk-default-required"/>
+        <include-hook name="pfshooks:default-required"/>
+        <include-hook name="pfscorehooks:default-required"/>
+    </define>
+
+    <!-- optional caches -->
+    <when noton="turbo-boosted">
+        <define name="static-resource-source-wrapper" abstract="true" ref="static-resource-source"/>
+        <define name="compiled-stylesheet-source-wrapper" abstract="true" ref="compiled-stylesheet-source"/>
+        <define name="stylesheet-resource-source-wrapper" abstract="true" ref="stylesheet-resource-source"/>
+    </when>
+    <when on="turbo-boosted">
+        <define name="static-resource-source-wrapper" abstract="true" class="com.oilspace.apps.services.appserver.servlet.staticcontent.StaticResourceCache">
+            <uses ref="static-resource-source"/>
+            <uses>
+                <interface class="com.oilspace.apps.cache.SweepingCacheConfig"/>
+                <interface class="com.oilspace.apps.cache.ExpiringValueLoaderConfig"/>
+        
+                <!-- Maximum size of the cache, in bytes -->
+                <property name="maxSize">10000000</property>
+    
+                <!-- Maximum lifetime for an entry -->
+                <property name="valueLifetime" unit="minutes">60</property>
+
+                <!-- Interval between sweeps of the cache -->
+                <property name="cacheSweepInterval" unit="minutes">30</property>
+            </uses>
+        </define>
+
+        <define name="compiled-stylesheet-source-wrapper" abstract="true" class="com.oilspace.apps.stylesheet.client.StylesheetCache">
+            <uses ref="compiled-stylesheet-source"/>
+            <uses>
+                <interface class="com.oilspace.apps.cache.SweepingCacheConfig"/>
+                <interface class="com.oilspace.apps.cache.ExpiringValueLoaderConfig"/>
+
+                <!-- Maximum size of the cache, in stylesheets -->
+                <property name="maxSize">100</property>
+
+                <!-- Maximum lifetime for an entry -->
+                <property name="valueLifetime" unit="minutes">60</property>
+
+                <!-- Interval between sweeps of the cache -->
+                <property name="cacheSweepInterval" unit="minutes">30</property>
+            </uses>
+        </define>
+
+        <define name="stylesheet-resource-source-wrapper" abstract="true" class="com.oilspace.apps.stylesheet.server.StylesheetResourceCache">
+            <uses ref="stylesheet-resource-source"/>
+            <uses>
+                <interface class="com.oilspace.apps.cache.SweepingCacheConfig"/>
+                <interface class="com.oilspace.apps.cache.ExpiringValueLoaderConfig"/>
+
+                <!-- Maximum size of the cache, in bytes -->
+                <property name="maxSize">5000</property>
+
+                <!-- Maximum lifetime for an entry -->
+                <property name="valueLifetime" unit="minutes">60</property>
+
+                <!-- Interval between sweeps of the cache -->
+                <property name="cacheSweepInterval" unit="minutes">30</property>
+            </uses>
+        </define>
+    </when>
+
+    <define name="test-valid-contract"
+            class="com.oilspace.apps.marketstate.expiration.model.impl.TestValidContractBeforeInclusiveMonthX" />
+
+    <define name="test-before-inclusive-month-factory"
+            class="com.oilspace.apps.marketstate.expiration.model.impl.TestBeforeInclusiveMonthXFactory" />
+
+    <define name="test-last-month-missing"
+            class="com.oilspace.apps.marketstate.expiration.model.impl.TestLastMonthMissingYearsN" />
+
+    <define name="test-last-month-missing-factory"
+            class="com.oilspace.apps.marketstate.expiration.model.impl.TestLastMonthMissingYearsNFactory" />
+
+    <define name="test-current-month-end-expiration-model"
+            class="com.oilspace.apps.marketstate.expiration.model.impl.TestLastBusinessDayOfMonthExpirationModel"/>
+
+    <define name="test-expiration-models" sequential="true">
+        <item ref="test-last-month-missing-factory" />
+        <item ref="test-last-month-missing" />
+        <item ref="test-before-inclusive-month-factory" />
+        <item class="com.oilspace.apps.marketstate.expiration.model.TestInstrumentExpirationModel" />
+        <item ref="test-valid-contract" />
+        <item ref="test-current-month-end-expiration-model"/>
+    </define>
+
+    <!-- used to testing compat-required loading -->
+    <define-default class="com.oilspace.apps.init.TestCompatLoading"/>
+
+    <define name="test-thread-pool">
+        <item class="com.oilspace.apps.common.workqueue.TestWatchdog" />
+        <item class="com.oilspace.apps.common.workqueue.TestThreadPool" />
+        <item class="com.oilspace.apps.common.workqueue.TestQueue" />
+    </define>
+
+    <define name="src-unit-tests" sequential="true">
+        <item ref="test-thread-pool"/>
+        <item ref="test-expiration-models" />
+        <item class="com.oilspace.apps.marketstate.persistence.common.data.TestDailyValues" />
+        <item class="com.oilspace.apps.common.io.TestBase64"/>
+        <item class="com.oilspace.apps.common.io.TestBlockOutputStream"/>
+        <item class="com.oilspace.apps.feeds.common.TestDataChainCollator"/>
+        <item class="com.oilspace.apps.feeds.common.TestSerialLock"/>
+        <item class="com.oilspace.apps.common.prefix.TestStringPrefix"/>
+        <item class="com.oilspace.apps.common.prefix.TestPrefixMap"/>
+        <item class="com.oilspace.apps.common.path.TestPath"/>
+        <item class="com.oilspace.apps.database.framework.TestOverflowBlobInputStream"/>
+        <item class="com.oilspace.apps.common.random.TestRijndael"/>
+        <item class="com.oilspace.apps.tweak.util.TestLogDistribution"/>
+        <item class="com.oilspace.apps.common.subscribable.TestSubscribableImpl"/>
+        <item class="com.oilspace.apps.common.availability.TestLatchedAvailability"/>
+        <item class="com.oilspace.apps.common.availability.TestAvailabilityFunctions"/>
+
+        <item class="com.oilspace.apps.common.runner.TestRunner">
+            <uses class="int">3</uses>
+            <uses class="com.oilspace.apps.common.workqueue.SimpleWorkQueue">
+                <uses class="com.oilspace.apps.common.workqueue.SimpleWorkQueueConfig">
+                    <property name="name">Test work queue</property>
+                    <property name="maxConcurrency">3</property>
+                    <property name="watchdogConfig" ref="null"/>
+                </uses>
+            </uses>
+        </item>
+        <item class="com.oilspace.apps.common.runner.TestRunner">
+            <uses class="int">3</uses>
+            <uses class="com.oilspace.apps.common.workqueue.ExpandingWorkQueue">
+                <uses class="com.oilspace.apps.common.workqueue.ExpandingWorkQueueConfig">
+                    <property name="name">Init framework work queue</property>
+                    <property name="maxConcurrency">3</property>
+                    <property name="expandInterval">10</property>
+                </uses>
+            </uses>
+        </item>
+
+        <include ref="time:unit-tests"/>
+        <include ref="ports:unit-tests"/>
+        <include ref="rpc:unit-tests"/>
+
+        <item class="com.oilspace.apps.common.occasionaltask.TestOccasionalTask"/>
+
+        <include ref="symbol:unit-tests"/>
+        <item class="com.oilspace.apps.services.appserver.servlet.dispatch.Test"/>
+
+        <!-- test column creation support -->
+        <item ref="db:run-actions">
+            <define name="db:database" ref="schema:core-database"/>
+            <define name="db:actions">
+                <item ref="db:create-table">
+                    <define name="db:table-name">test</define>
+                    <define name="db:columns">
+                        <item>x varchar(100) not null primary key</item>
+                    </define>
+                </item>
+                <item ref="db:create-table">
+                    <define name="db:table-name">test</define>
+                    <define name="db:columns">
+                        <item>x varchar(100) not null primary key</item>
+                    </define>
+                    <define name="db:add-columns">
+                        <item>y varchar(100)</item>
+                    </define>
+                </item>
+                <item ref="db:run-sql">
+                    <define name="db:sql">insert into test values ('X', 'Y')</define>
+                </item>
+                <item ref="db:drop-table">
+                    <define name="db:table-name">test</define>
+                </item>
+            </define>
+        </item>
+
+        <item class="com.oilspace.apps.marketstate.persistence.server.TestPriceManagerCache">
+            <uses class="com.oilspace.apps.marketstate.persistence.server.PriceManagerCacheConfig">
+                <!-- Maximum size of the cache, in bytes -->
+                <property name="maxSize">10000000</property>
+
+                <!-- Maximum lifetime for an entry -->
+                <property name="valueLifetime" unit="minutes">30</property>
+
+                <!-- Interval between sweeps of the cache -->
+                <property name="cacheSweepInterval" unit="hours">1</property>
+            </uses>
+        </item>
+
+        <item class="com.oilspace.apps.common.xml.sax.TestXIncludeFilter">
+            <uses ref="codepack-resolver"/>
+        </item>
+
+        <item ref="stylesheet-server"/>
+
+        <item class="com.oilspace.apps.stylesheet.localization.Test">
+           <uses ref="codepack-resolver"/>
+        </item>
+
+        <item ref="users:server"/>
+        <item ref="ae-server-required"/>
+
+        <item ref="users:unit-tests"/>
+
+        <item class="com.oilspace.apps.filestorage.TestFileStorage">
+            <uses ref="default-database"/>
+            <uses ref="file-storage"/>
+        </item>
+
+        <item ref="portal:unit-tests"/>
+
+        <item ref="test-day"/>
+        <item class="com.oilspace.apps.services.appserver.servlet.http.TestHttpRequestParser"/>
+        <item class="com.oilspace.apps.common.util.TestStartsWithMap"/>
+        <item ref="test-symbol"/>
+        <item ref="test-expiration"/>
+        <item ref="test-custom-news"/>
+        <item ref="test-argus-parser"/>
+        <item class="com.oilspace.apps.services.appserver.servlet.http.TestCookieParser"/>
+
+        <item class="com.oilspace.apps.common.util.TestUidGenerator"/>
+        <item class="com.oilspace.apps.common.util.TestStringUtils"/>
+        <item ref="test-components"/>
+        <include ref="test-ae-snapshots"/>
+    </define>
+
+    <define name="test-components" sequential="true">
+        <item class="com.oilspace.apps.init.parser.TestTypeFactory"/>
+    </define>
+
+    <define name="test-day" class="com.oilspace.apps.common.misc.TestDay"/>
+
+    <define name="test-ae-snapshots">
+        <item class="com.oilspace.apps.alterego.server.security.store.impl.TestSnapshotBuilder"/>
+    </define>
+
+    <define name="test-argus-parser" class="com.oilspace.apps.symbol.parsers.argus.TestArgusDescriptionServer">
+        <uses ref="symbol-dictionary"/>
+        <uses ref="symbol:argus-dictionary"/>
+        <uses ref="market-database"/>
+    </define>
+
+    <define name="static-content-resolver" class="com.oilspace.apps.resource.LocalizerMap">
+        <uses ref="portal:portal-types"/>
+        <uses ref="portal:languages"/>
+        <uses class="com.oilspace.apps.resource.LocalizerMapping[]">
+            <item>
+                <property name="path"></property>
+                <property name="prefix">/core/content/html</property>
+                <property name="resolver" ref="codepack-resolver"/>
+            </item>
+            <item>
+                <property name="path">/codepack</property>
+                <property name="prefix">content/html</property>
+                <property name="resolver" ref="codepack-search-resolver"/>
+            </item>
+        </uses>
+    </define>
+
+    <when defined="EXTERNAL_DIRECTORY_AUTH">
+        <define name="ad-user-mapping" class="com.oilspace.apps.iuser.mapping.ad.ADUserMapping">
+            <uses ref="ad-mapping-cache"/>
+        </define>
+        <define name="ad-mapping-cache" class="com.oilspace.apps.iuser.mapping.ad.ADMappingCache">
+            <uses ref="default-database"/>
+            <uses>
+                <port class="com.oilspace.apps.iuser.mapping.ad.IADMappingCacheBroadcasts" ref="rpc:broadcast-port-def">
+                    <define name="address">ad-mapping-cache/broadcast</define>
+                </port>
+            </uses>
+        </define>
+    </when>
+
+    <!-- symbol test component -->
+    <define name="test-symbol" sequential="true">
+        <item class="com.oilspace.apps.symbol.test.TestSymbol"/>
+        <item class="com.oilspace.apps.symbol.test.TestSpreadSymbol">
+            <uses ref="symbol:dictionary"/>
+        </item>
+    </define>
+    
+    <!-- contract expiration test -->
+    <define name="test-expiration" sequential="true">
+        <item class="com.oilspace.apps.marketstate.expiration.common.guide.TestMarketGuideExpirations"/>
+    </define>
+
+    <define name="test-custom-news" sequential="true">
+        <item class="com.oilspace.apps.channel.impl.common.test.TestCustomChannel"/>
+    </define>
+
+    <define name="test-contract-from-nearby" class="com.oilspace.apps.marketstate.expiration.model.TestFutureIdByNearby"/>
+
+    <!-- instrument-expiration-clock used in InstrumentExpirationModel-->
+    <define name="instrument-expiration-clock" ref="time:real-timebase"/>
+
+    <define name="switch-users-to-resizable-portal" sequential="true">
+        <item ref="ae-server-required"/>
+        <item ref="users:server"/>
+        <item class="com.oilspace.apps.portal.UserPortalFilteredChangeComponent">
+            <uses class="com.oilspace.apps.portal.UserPortalFilteredChangeComponentConfig">
+                <property name="users" ref="users:users"/>
+                <property name="oldPortalId">oilspace</property>
+                <property name="newPortalId">oilspacenew</property>
+                <property name="securityManager" ref="ae-security-manager"/>
+                <property name="companies" ref="companies"/>
+                <property name="excludedCompanyNames" class="java.lang.String[]"/>
+                <property name="excludedRoleNames" class="java.lang.String[]">
+                    <item>role:services.aspect.aspect-user</item>
+                    <item>role:services.aspect.aspect-security-admin</item>
+                    <item>role:services.aspect.aspect-admin</item>
+                    <item>role:services.aspect.aspect-system-comparison</item>
+                    <item>role:services.aspect.regression-system-comparison</item>
+                </property>
+            </uses>
+        </item>
+        <item class="com.oilspace.apps.init.Exit">
+            <uses class="java.lang.String">Migration finished.</uses>
+            <uses class="int">0</uses>
+        </item>
+    </define>
+
+    <define-default class="com.oilspace.apps.integration.calendars.CalendarServerResolver">
+        <uses class="com.oilspace.apps.integration.calendars.SimpleCalendarService"/>
+        <uses class="com.oilspace.apps.integration.calendars.ICalendarServer[]">
+            <include-hook name="calendar-servers-hook"/>
+        </uses>
+    </define-default>
+
+    <define name="rpc-clickstream-logger-port">
+        <port class="com.oilspace.apps.clickstream.logging.CSRemote"
+              ref="rpc:broadcast-port-def">
+            <define name="address">clickstream/logger</define>
+        </port>
+    </define>
+
+    <define name="rpc-clickstream-event-listener-port">
+        <port class="com.oilspace.apps.clickstream.RPCEventListener"
+              ref="rpc:broadcast-port-def">
+            <define name="address">clickstream/event</define>
+        </port>
+    </define>
+
+    <define name="rpc-clickstream-persister"
+            class="com.oilspace.apps.channel.impl.feeds.CustomChannelChangeListener"
+            ref="rpc:broadcast-port-def">
+        <define name="address">clickstream/persistence</define>
+    </define>
+
+    <define name="permissions-completion-rules" class="com.oilspace.apps.alterego.client.security.ICompletionRule[]">
+        <item class="com.oilspace.apps.alterego.client.security.AssignRolesRule"/>
+        <item class="com.oilspace.apps.alterego.client.bbs.BBSPermissionsRule"/>
+        <include-hook name="oilwatch-permissions-completion-rules"/>
+    </define>
+
+    <!-- AE user roles updater service -->
+    <define name="add-accounts-permissions"
+            class="com.oilspace.apps.alterego.server.security.AddAccountsPermissions">
+    </define>
+</components>
